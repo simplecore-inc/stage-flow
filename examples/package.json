@@ -1,0 +1,33 @@
+{
+  "name": "stage-flow-examples",
+  "version": "1.0.0",
+  "description": "Comprehensive examples for the stage-flow library",
+  "type": "module",
+  "scripts": {
+    "example:basic": "tsx basic-usage.ts",
+    "example:typescript": "tsx typescript-usage-examples.ts",
+    "example:plugins": "tsx plugin-system-usage.ts",
+    "example:middleware": "tsx middleware-usage.ts",
+    "example:effects": "tsx effect-system-usage.ts",
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@stage-flow/core": "file:../packages/core",
+    "@stage-flow/react": "file:../packages/react",
+    "@stage-flow/plugins": "file:../packages/plugins",
+    "@stage-flow/testing": "file:../packages/testing",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "framer-motion": "^10.16.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.25",
+    "@types/react-dom": "^18.2.11",
+    "@vitejs/plugin-react": "^4.0.4",
+    "tsx": "^3.12.7",
+    "typescript": "^5.2.2",
+    "vite": "^4.4.9"
+  }
+}
