@@ -415,6 +415,6 @@ Components are rendered using StageRenderer:
 
 ## Related Examples
 
-- **[Memoization](./memoization.md)** - Using React.memo and useCallback
+- **Performance Optimization** - Using React.memo and useCallback
 
 - **[Basic Examples](/docs/examples/basic/simple-counter)** - Simple stage machine examples 

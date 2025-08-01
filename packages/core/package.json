@@ -1,6 +1,6 @@
 {
   "name": "@stage-flow/core",
-  "version": "1.0.0",
+  "version": "0.0.2",
   "type": "module",
   "description": "Framework-agnostic core stage flow engine",
   "main": "dist/index.js",
@@ -25,7 +25,8 @@
   "unpkg": "dist/index.umd.js",
   "jsdelivr": "dist/index.umd.js",
   "files": [
-    "dist"
+    "dist",
+    "README.md"
   ],
   "scripts": {
     "build": "rollup -c",
@@ -47,5 +48,23 @@
     "vitest": "^0.34.6"
   },
   "peerDependencies": {},
-  "sideEffects": false
+  "sideEffects": false,
+  "keywords": [
+    "stage-flow",
+    "state-machine",
+    "react",
+    "typescript",
+    "animation",
+    "plugin-system"
+  ],
+  "author": "SimpleCORE",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/simplecore-inc/stage-flow.git"
+  },
+  "bugs": {
+    "url": "https://github.com/simplecore-inc/stage-flow/issues"
+  },
+  "homepage": "https://stage-flow.simplecore.dev"
 }

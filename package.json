@@ -1,6 +1,6 @@
 {
   "name": "stage-flow",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "type": "module",
   "description": "A type-safe, plugin-based stage flow library for React applications",
   "workspaces": [
@@ -41,5 +41,23 @@
   "packageManager": "npm@9.0.0",
   "dependencies": {
     "react-live": "^4.1.8"
-  }
+  },
+  "keywords": [
+    "stage-flow",
+    "state-machine",
+    "react",
+    "typescript",
+    "animation",
+    "plugin-system"
+  ],
+  "author": "SimpleCORE",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/simplecore-inc/stage-flow.git"
+  },
+  "bugs": {
+    "url": "https://github.com/simplecore-inc/stage-flow/issues"
+  },
+  "homepage": "https://stage-flow.simplecore.dev"
 }

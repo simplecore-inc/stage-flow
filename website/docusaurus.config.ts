@@ -15,14 +15,14 @@ const config: Config = {
   },
 
   // Set the production url of your site here
-  url: 'https://stage-flow.dev',
+  url: 'https://simplecore-inc.github.io',
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, is often '/<projectName>/'
-  baseUrl: '/',
+  baseUrl: '/stage-flow/',
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
-  organizationName: 'stage-flow', // Usually your GitHub org/user name.
+  organizationName: 'simplecore-inc', // Usually your GitHub org/user name.
   projectName: 'stage-flow', // Usually your repo name.
 
   onBrokenLinks: 'warn',
@@ -47,7 +47,7 @@ const config: Config = {
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
           editUrl:
-            'https://github.com/stage-flow/stage-flow/tree/main/website/',
+            'https://github.com/simplecore-inc/stage-flow/tree/main/website/',
         },
         theme: {
           customCss: './src/css/custom.css',
@@ -69,11 +69,7 @@ const config: Config = {
     // Replace with your project's social card
     image: 'img/docusaurus-social-card.jpg',
     navbar: {
-      title: 'Stage Flow',
-      logo: {
-        alt: 'Stage Flow Logo',
-        src: 'img/logo.svg',
-      },
+      title: 'SimpleCORE Inc.',
       items: [
         {
           type: 'docSidebar',
@@ -82,7 +78,7 @@ const config: Config = {
           label: 'Documentation',
         },
         {
-          href: 'https://github.com/stage-flow/stage-flow',
+          href: 'https://github.com/simplecore-inc/stage-flow',
           label: 'GitHub',
           position: 'right',
         },
@@ -120,8 +116,8 @@ const config: Config = {
               to: '/docs/examples/advanced/examples-multi-step-form',
             },
             {
-              label: 'Integration Examples',
-              to: '/docs/examples/integration/react-router-integration',
+              label: 'Animation Examples',
+              to: '/docs/examples/animation/animation-effects',
             },
           ],
         },
@@ -130,15 +126,15 @@ const config: Config = {
           items: [
             {
               label: 'GitHub',
-              href: 'https://github.com/stage-flow/stage-flow',
+              href: 'https://github.com/simplecore-inc/stage-flow',
             },
             {
               label: 'Issues',
-              href: 'https://github.com/stage-flow/stage-flow/issues',
+              href: 'https://github.com/simplecore-inc/stage-flow/issues',
             },
             {
               label: 'Discussions',
-              href: 'https://github.com/stage-flow/stage-flow/discussions',
+              href: 'https://github.com/simplecore-inc/stage-flow/discussions',
             },
           ],
         },
@@ -147,7 +143,7 @@ const config: Config = {
           items: [
             {
               label: 'Changelog',
-              href: 'https://github.com/stage-flow/stage-flow/releases',
+              href: 'https://github.com/simplecore-inc/stage-flow/releases',
             },
           ],
         },
