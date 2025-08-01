@@ -309,10 +309,6 @@ function TodoList() {
         name: "idle",
         data: { todos: [], newTodo: "" },
         transitions: [
-          { target: "idle", event: "addTodo" },
-          { target: "idle", event: "completeTodo" },
-          { target: "idle", event: "deleteTodo" },
-          { target: "idle", event: "updateNewTodo" },
           { target: "saved", event: "save" },
         ],
       },
