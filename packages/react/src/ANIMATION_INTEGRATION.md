@@ -34,7 +34,6 @@ The `StageRenderer` component is the primary integration point between the effec
 import { StageRenderer, DEFAULT_EFFECTS } from '@stage-flow/react';
 
 <StageRenderer
-  engine={engine}
   effects={{
     welcome: DEFAULT_EFFECTS.fade,
     loading: DEFAULT_EFFECTS.slide,
@@ -117,7 +116,6 @@ These methods return the effect name as defined in the stage configuration, whic
 
 ```tsx
 <StageRenderer
-  engine={engine}
   disableAnimations={true} // Disables all animations
 />
 ```
@@ -128,7 +126,6 @@ These methods return the effect name as defined in the stage configuration, whic
 const [animationsEnabled, setAnimationsEnabled] = useState(true);
 
 <StageRenderer
-  engine={engine}
   disableAnimations={!animationsEnabled}
 />
 ```
@@ -143,7 +140,6 @@ const effects = {
 };
 
 <StageRenderer
-  engine={engine}
   effects={effects}
 />
 ```
@@ -260,14 +256,13 @@ If you were using the previous version without integrated effects:
 
 ```tsx
 // Before
-<StageRenderer engine={engine} effects={customEffects} />
+<StageRenderer effects={customEffects} />
 
 // After (effects are now automatically resolved from engine)
-<StageRenderer engine={engine} />
+<StageRenderer />
 
 // Or with overrides
 <StageRenderer 
-  engine={engine} 
   effects={overrideEffects} // Only needed for overrides
 />
 ```
@@ -310,7 +305,6 @@ For performance-critical applications:
 const shouldDisableAnimations = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 <StageRenderer
-  engine={engine}
   disableAnimations={shouldDisableAnimations}
 />
 ```
@@ -334,7 +328,7 @@ Wrap stage renderers in error boundaries:
 
 ```tsx
 <StageErrorBoundary>
-  <StageRenderer engine={engine} />
+  <StageRenderer />
 </StageErrorBoundary>
 ```
 

@@ -2,7 +2,7 @@
  * Tests for StageFlowEngine - Task 2.1
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { StageFlowEngine } from '../engine';
 import { StageFlowConfig } from '../types/core';
 import { ConfigurationError } from '../types/errors';
@@ -937,6 +937,126 @@ describe('StageFlowEngine - Task 2.3', () => {
                 await engine.goTo('loading');
                 expect(engine.getCurrentStage()).toBe('loading');
             });
+        });
+    });
+});
+
+describe('StageFlowEngine - Task 2.4', () => {
+    const validConfig: StageFlowConfig<TestStage, TestData> = {
+        initial: 'initial',
+        stages: [
+            {
+                name: 'initial',
+                transitions: [
+                    { target: 'loading', event: 'start' }
+                ]
+            },
+            {
+                name: 'loading',
+                transitions: [
+                    { target: 'success', event: 'complete' },
+                    { target: 'error', event: 'fail' }
+                ]
+            },
+            {
+                name: 'success',
+                transitions: [
+                    { target: 'initial', event: 'reset' }
+                ]
+            },
+            {
+                name: 'error',
+                transitions: [
+                    { target: 'initial', event: 'reset' }
+                ]
+            }
+        ]
+    };
+
+    describe('setStageData', () => {
+        let engine: StageFlowEngine<TestStage, TestData>;
+
+        beforeEach(async () => {
+            engine = new StageFlowEngine(validConfig);
+            await engine.start();
+        });
+
+        it('should update stage data without changing stage', () => {
+            const initialData = { message: 'Initial', count: 0 };
+            engine.setStageData(initialData);
+
+            expect(engine.getCurrentStage()).toBe('initial');
+            expect(engine.getCurrentData()).toEqual(initialData);
+        });
+
+        it('should notify subscribers when data is updated', () => {
+            const mockCallback = vi.fn();
+            engine.subscribe(mockCallback);
+
+            const newData = { message: 'Updated', count: 42 };
+            engine.setStageData(newData);
+
+            expect(mockCallback).toHaveBeenCalledWith('initial', newData);
+        });
+
+        it('should throw error when engine is not started', () => {
+            const stoppedEngine = new StageFlowEngine(validConfig);
+            const newData = { message: 'Test' };
+
+            expect(() => stoppedEngine.setStageData(newData)).toThrow('Engine must be started before updating stage data');
+        });
+
+        it('should throw error when transition is in progress', async () => {
+            // Start a transition
+            const transitionPromise = engine.send('start');
+            
+            const newData = { message: 'Test' };
+            expect(() => engine.setStageData(newData)).toThrow('Cannot update stage data while transition is in progress');
+
+            // Wait for transition to complete
+            await transitionPromise;
+        });
+
+        it('should validate data against current stage', () => {
+            // This test assumes the runtime type checker validates data
+            // In a real implementation, you might want to test with invalid data types
+            const validData = { message: 'Valid data', count: 123 };
+            
+            expect(() => engine.setStageData(validData)).not.toThrow();
+        });
+
+        it('should preserve stage history when updating data', async () => {
+            const initialData = { message: 'Initial' };
+            engine.setStageData(initialData);
+
+            // Navigate to another stage
+            await engine.goTo('loading', { message: 'Loading' });
+
+            // Update data in new stage
+            const updatedData = { message: 'Updated loading' };
+            engine.setStageData(updatedData);
+
+            expect(engine.getCurrentStage()).toBe('loading');
+            expect(engine.getCurrentData()).toEqual(updatedData);
+        });
+
+        it('should work with complex data structures', () => {
+            const complexData = {
+                message: 'Complex data',
+                count: 42,
+                nested: {
+                    value: 'nested value',
+                    array: [1, 2, 3]
+                },
+                flags: {
+                    isActive: true,
+                    isVisible: false
+                }
+            };
+
+            engine.setStageData(complexData);
+
+            expect(engine.getCurrentData()).toEqual(complexData);
         });
     });
 });

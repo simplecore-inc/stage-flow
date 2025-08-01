@@ -23,21 +23,25 @@ This example demonstrates a simple counter with increment, decrement, and reset 
 
 ## Live Example
 
-```jsx live
+```jsx live 
 function SimpleCounter() {
   // Individual stage component for the counter
   function IdleStage({ data, send }) {
+    const { engine } = useStageFlow();
+    
     const handleIncrement = React.useCallback(() => {
-      send("increment", { count: (data?.count || 0) + 1 });
-    }, [data?.count, send]);
+      const newCount = (data?.count || 0) + 1;
+      engine.setStageData({ count: newCount });
+    }, [data?.count, engine]);
 
     const handleDecrement = React.useCallback(() => {
-      send("decrement", { count: Math.max(0, (data?.count || 0) - 1) });
-    }, [data?.count, send]);
+      const newCount = Math.max(0, (data?.count || 0) - 1);
+      engine.setStageData({ count: newCount });
+    }, [data?.count, engine]);
 
     const handleReset = React.useCallback(() => {
-      send("reset", { count: 0 });
-    }, [send]);
+      engine.setStageData({ count: 0 });
+    }, [engine]);
 
     return (
       <div
@@ -115,9 +119,7 @@ function SimpleCounter() {
         name: "idle",
         data: { count: 0 },
         transitions: [
-          { target: "idle", event: "increment" },
-          { target: "idle", event: "decrement" },
-          { target: "idle", event: "reset" },
+          // Removed self-transitions since we're using setStageData
         ],
       },
     ],
@@ -128,130 +130,10 @@ function SimpleCounter() {
   return (
     <StageFlowProvider engine={engine}>
       <StageRenderer
-        currentStage="idle"
         stageComponents={{
           idle: IdleStage,
-        }}
-        data={{ count: 0 }}
-        send={(event, data) => {
-          if (event === "increment") {
-            engine.send("increment", data);
-          } else if (event === "decrement") {
-            engine.send("decrement", data);
-          } else if (event === "reset") {
-            engine.send("reset", data);
-          }
         }}
       />
     </StageFlowProvider>
   );
 }
-```
-
-## Code Explanation
-
-### Stage Component Structure
-
-The counter now uses individual stage components:
-
-```javascript
-function IdleStage({ data, send }) {
-  // Stage-specific logic and UI
-  return <div>{/* Counter UI */}</div>;
-}
-```
-
-### Key Features
-
-- **Individual Stage Components**: Each stage is a separate React component
-- **Props-based Communication**: Stage components receive `data` and `send` as props
-- **StageRenderer Integration**: Automatic stage switching based on current stage
-- **Minimal React dependency**: Only useRef for engine storage
-- **Stage Flow state management**: All counter data managed by engine
-- **Event Handling**: Three events: increment, decrement, reset
-- **Boundary Conditions**: Decrement won't go below 0
-
-### Engine Creation
-
-The engine is created **once using useRef** for minimal React dependency:
-
-```javascript
-// import { StageFlowEngine } from '@stage-flow/core';
-// import { StageFlowProvider, useStageFlow } from '@stage-flow/react';
-
-function SimpleCounter() {
-  // Create engine once using useRef (minimal dependency)
-  const engineRef = React.useRef();
-
-  if (!engineRef.current) {
-    engineRef.current = new StageFlowEngine({
-      initial: "idle",
-      stages: [
-        {
-          name: "idle",
-          data: { count: 0 },
-          transitions: [
-            { target: "idle", event: "increment" },
-            { target: "idle", event: "decrement" },
-            { target: "idle", event: "reset" },
-          ],
-        },
-      ],
-    });
-
-    engineRef.current.start();
-  }
-
-  const { currentStage, data, send } = useStageFlow(engineRef.current);
-}
-```
-
-### StageRenderer Setup
-
-```javascript
-const stageComponents = {
-  idle: IdleStage,
-};
-
-return (
-  <StageFlowProvider engine={engineRef.current}>
-    <StageRenderer currentStage={currentStage} stageComponents={stageComponents} data={data} send={send} />
-  </StageFlowProvider>
-);
-```
-
-### State Management
-
-```javascript
-const { currentStage, data, send } = useStageFlow(engineRef.current);
-```
-
-- `currentStage`: Always "idle" in this simple example
-- `data`: Contains the counter value
-- `send`: Function to send events to the engine
-
-### Event Handling in Stage Component
-
-```javascript
-function IdleStage({ data, send }) {
-  const handleIncrement = () => {
-    send("increment", { count: (data?.count || 0) + 1 });
-  };
-}
-```
-
-Each event updates the counter value in the engine data.
-
-## Benefits of This Approach
-
-1. **Separation of Concerns**: Each stage has its own component
-2. **Reusability**: Stage components can be reused across different flows
-3. **Maintainability**: Easier to maintain and test individual stages
-4. **Scalability**: Easy to add new stages or modify existing ones
-5. **Type Safety**: Better TypeScript support with component props
-
-## Related Examples
-
-- **[Todo List](./todo-list.md)** - Add, complete, and delete items
-- **[Toggle Switch](./toggle-switch.md)** - Simple on/off state management
-- **[Advanced Examples](../advanced/overview)** - Complex multi-stage examples

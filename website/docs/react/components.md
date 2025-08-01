@@ -81,7 +81,6 @@ function App() {
   return (
     <StageFlowProvider engine={engine}>
       <StageRenderer
-        engine={engine}
         stageComponents={{
           idle: IdleView,
           loading: LoadingView,
@@ -226,7 +225,6 @@ function App() {
   return (
     <StageFlowProvider engine={engine}>
       <StageRenderer
-        engine={engine}
         stageComponents={{
           idle: IdleView,
           loading: LoadingView,
@@ -241,26 +239,50 @@ function App() {
 
 // Custom animation with specific effects for each stage
 function CustomStageAnimation() {
-  const { currentStage } = useStageFlow<AppStage, AppData>();
-  
-  const getStageEffect = (stage: AppStage) => {
-    switch (stage) {
-      case 'idle':
-        return { type: 'fade', duration: 200 };
-      case 'loading':
-        return { type: 'scale', duration: 400 };
-      case 'success':
-        return { type: 'slideUp', duration: 500, easing: 'easeOut' };
-      case 'error':
-        return { type: 'slideDown', duration: 300, easing: 'easeIn' };
-      default:
-        return { type: 'fade', duration: 300 };
-    }
-  };
-  
   return (
-    <StageAnimation effect={getStageEffect(currentStage)}>
-      <div>Stage-specific animated content</div>
+    <StageFlowProvider engine={engine}>
+      <StageRenderer
+        stageComponents={{
+          idle: IdleAnimatedView,
+          loading: LoadingAnimatedView,
+          success: SuccessAnimatedView,
+          error: ErrorAnimatedView
+        }}
+        defaultEffect={{ type: 'fade', duration: 300 }}
+      />
+    </StageFlowProvider>
+  );
+}
+
+// Individual animated stage components
+function IdleAnimatedView({ stage, data, send, goTo, isTransitioning }) {
+  return (
+    <StageAnimation effect={{ type: 'fade', duration: 200 }}>
+      <div>Idle stage animated content</div>
+    </StageAnimation>
+  );
+}
+
+function LoadingAnimatedView({ stage, data, send, goTo, isTransitioning }) {
+  return (
+    <StageAnimation effect={{ type: 'scale', duration: 400 }}>
+      <div>Loading stage animated content</div>
+    </StageAnimation>
+  );
+}
+
+function SuccessAnimatedView({ stage, data, send, goTo, isTransitioning }) {
+  return (
+    <StageAnimation effect={{ type: 'slideUp', duration: 500, easing: 'easeOut' }}>
+      <div>Success stage animated content</div>
+    </StageAnimation>
+  );
+}
+
+function ErrorAnimatedView({ stage, data, send, goTo, isTransitioning }) {
+  return (
+    <StageAnimation effect={{ type: 'slideDown', duration: 300, easing: 'easeIn' }}>
+      <div>Error stage animated content</div>
     </StageAnimation>
   );
 }
@@ -283,74 +305,6 @@ function CustomVariantsAnimation() {
     >
       <div>Custom variant animation</div>
     </StageAnimation>
-  );
-}
-
-// Animation with lifecycle callbacks
-function AnimationWithCallbacks() {
-  const [animationState, setAnimationState] = useState('idle');
-  
-  return (
-    <StageAnimation
-      effect={{
-        type: 'slide',
-        duration: 500,
-        easing: 'easeInOutBack'
-      }}
-      onAnimationStart={() => {
-        console.log('Animation started');
-        setAnimationState('animating');
-      }}
-      onAnimationComplete={() => {
-        console.log('Animation completed');
-        setAnimationState('completed');
-      }}
-      className="animated-component"
-      style={{ 
-        width: '100%',
-        height: '200px',
-        backgroundColor: animationState === 'completed' ? '#4CAF50' : '#2196F3'
-      }}
-    >
-      <div>Animated content with callbacks</div>
-    </StageAnimation>
-  );
-}
-
-// Complex animation with multiple effects
-function ComplexAnimation() {
-  const [currentEffect, setCurrentEffect] = useState('fade');
-  
-  const effects = {
-    fade: { type: 'fade', duration: 300, easing: 'easeInOut' },
-    slide: { type: 'slide', duration: 500, easing: 'easeOutBack' },
-    scale: { type: 'scale', duration: 400, easing: 'easeInOutCubic' },
-    flip: { type: 'flip', duration: 600, easing: 'easeInOut' }
-  };
-  
-  return (
-    <div>
-      <div style={{ marginBottom: '20px' }}>
-        <button onClick={() => setCurrentEffect('fade')}>Fade</button>
-        <button onClick={() => setCurrentEffect('slide')}>Slide</button>
-        <button onClick={() => setCurrentEffect('scale')}>Scale</button>
-        <button onClick={() => setCurrentEffect('flip')}>Flip</button>
-      </div>
-      
-      <StageAnimation
-        effect={effects[currentEffect as keyof typeof effects]}
-        className="complex-animation"
-        style={{
-          padding: '20px',
-          border: '2px solid #ccc',
-          borderRadius: '8px',
-          backgroundColor: '#f5f5f5'
-        }}
-      >
-        <h3>Current Effect: {currentEffect}</h3>
-        <p>This content animates with different effects based on your selection.</p>
-      </StageAnimation>
-    </div>
   );
 }
 ```
@@ -406,7 +360,6 @@ function AnimatedApp() {
     >
       <StageFlowProvider engine={engine}>
         <StageRenderer
-          engine={engine}
           stageComponents={{
             idle: IdleView,
             loading: LoadingView,
@@ -429,7 +382,7 @@ function AnimatedApp() {
 
 ## Related Guides
 
-- **[Getting Started](/guide/getting-started)** - Set up your first Stage Flow project
-- **[Core Concepts](/guide/core-concepts)** - Learn the fundamental concepts
-- **[Basic Usage](/guide/basic-usage)** - See basic usage patterns
-- **[TypeScript Usage](/guide/typescript-usage)** - Advanced TypeScript features 
+- **[Getting Started](/docs/guide/getting-started)** - Set up your first Stage Flow project
+- **[Core Concepts](/docs/guide/core-concepts)** - Learn the fundamental concepts
+- **[Basic Usage](/docs/guide/basic-usage)** - See basic usage patterns
+- **[TypeScript Usage](/docs/guide/typescript-usage)** - Advanced TypeScript features 

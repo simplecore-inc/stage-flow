@@ -980,6 +980,60 @@ export class StageFlowEngine<TStage extends string, TData = unknown> implements 
   }
 
   /**
+   * Updates the current stage data without triggering a stage transition
+   * 
+   * This method allows you to update the data associated with the current stage
+   * without changing stages or triggering any transition logic. It's useful for
+   * updating form data, user input, or other state that doesn't require a
+   * stage change.
+   * 
+   * @param data - The new data to set for the current stage
+   * 
+   * @throws {TransitionError} When the engine is not started or a transition is in progress
+   * 
+   * @example
+   * ```typescript
+   * // Update form data without changing stages
+   * engine.setStageData({ 
+   *   ...engine.getCurrentData(), 
+   *   name: 'John Doe',
+   *   email: 'john@example.com' 
+   * });
+   * 
+   * // Update validation errors
+   * engine.setStageData({ 
+   *   ...engine.getCurrentData(), 
+   *   errors: { email: 'Invalid email format' } 
+   * });
+   * ```
+   */
+  setStageData(data: TData): void {
+    if (!this._isStarted) {
+      throw new TransitionError('Engine must be started before updating stage data');
+    }
+
+    if (this.state.isTransitioning) {
+      throw new TransitionError('Cannot update stage data while transition is in progress');
+    }
+
+    // Validate data against current stage
+    try {
+      this.runtimeTypeChecker.validateStageData(this.state.current, data);
+    } catch (error) {
+      if (error instanceof ConfigurationError) {
+        throw new TransitionError(error.message, error.context);
+      }
+      throw error;
+    }
+
+    // Update the data
+    this.state.data = data;
+    
+    // Notify subscribers of the data change
+    this._notifySubscribers(this.state.current, data);
+  }
+
+  /**
    * Adds middleware to the pipeline
    */
   addMiddleware(middleware: Middleware<TStage, TData>): void {

@@ -8,7 +8,7 @@ Create a basic form with loading, success, and error states:
 
 ```tsx
 import { StageFlowEngine } from '@stage-flow/core';
-import { StageFlowProvider, useStageFlow } from '@stage-flow/react';
+import { StageFlowProvider, StageRenderer } from '@stage-flow/react';
 
 // Define types
 type FormStage = 'idle' | 'loading' | 'success' | 'error';
@@ -43,18 +43,8 @@ const formConfig = {
 // Create engine
 const engine = new StageFlowEngine<FormStage, FormData>(formConfig);
 
-// React component
-function FormApp() {
-  return (
-    <StageFlowProvider engine={engine}>
-      <LoginForm />
-    </StageFlowProvider>
-  );
-}
-
-function LoginForm() {
-  const { currentStage, send, data } = useStageFlow<FormStage, FormData>();
-  
+// Stage components
+function IdleComponent({ data, send }) {
   const handleSubmit = async (email: string, password: string) => {
     send('submit', { email, password });
     
@@ -76,42 +66,58 @@ function LoginForm() {
   };
   
   return (
+    <form onSubmit={(e) => {
+      e.preventDefault();
+      const formData = new FormData(e.currentTarget);
+      handleSubmit(
+        formData.get('email') as string,
+        formData.get('password') as string
+      );
+    }}>
+      <input name="email" type="email" placeholder="Email" required />
+      <input name="password" type="password" placeholder="Password" required />
+      <button type="submit">Login</button>
+    </form>
+  );
+}
+
+function LoadingComponent({ data, send }) {
+  return <div>Logging in...</div>;
+}
+
+function SuccessComponent({ data, send }) {
+  return (
     <div>
-      {currentStage === 'idle' && (
-        <form onSubmit={(e) => {
-          e.preventDefault();
-          const formData = new FormData(e.currentTarget);
-          handleSubmit(
-            formData.get('email') as string,
-            formData.get('password') as string
-          );
-        }}>
-          <input name="email" type="email" placeholder="Email" required />
-          <input name="password" type="password" placeholder="Password" required />
-          <button type="submit">Login</button>
-        </form>
-      )}
-      
-      {currentStage === 'loading' && (
-        <div>Logging in...</div>
-      )}
-      
-      {currentStage === 'success' && (
-        <div>
-          <h2>Success!</h2>
-          <p>Welcome back!</p>
-          <button onClick={() => send('reset')}>Logout</button>
-        </div>
-      )}
-      
-      {currentStage === 'error' && (
-        <div>
-          <h2>Error</h2>
-          <p>{data.error}</p>
-          <button onClick={() => send('retry')}>Try Again</button>
-        </div>
-      )}
+      <h2>Success!</h2>
+      <p>Welcome back!</p>
+      <button onClick={() => send('reset')}>Logout</button>
     </div>
+  );
+}
+
+function ErrorComponent({ data, send }) {
+  return (
+    <div>
+      <h2>Error</h2>
+      <p>{data.error}</p>
+      <button onClick={() => send('retry')}>Try Again</button>
+    </div>
+  );
+}
+
+// React app
+function FormApp() {
+  return (
+    <StageFlowProvider engine={engine}>
+      <StageRenderer
+        stageComponents={{
+          idle: IdleComponent,
+          loading: LoadingComponent,
+          success: SuccessComponent,
+          error: ErrorComponent
+        }}
+      />
+    </StageFlowProvider>
   );
 }
 ```
@@ -162,71 +168,8 @@ const wizardConfig = {
   ]
 };
 
-function WizardApp() {
-  const engine = new StageFlowEngine<WizardStage, WizardData>(wizardConfig);
-  
-  return (
-    <StageFlowProvider engine={engine}>
-      <Wizard />
-    </StageFlowProvider>
-  );
-}
-
-function Wizard() {
-  const { currentStage, send, data } = useStageFlow<WizardStage, WizardData>();
-  
-  return (
-    <div>
-      <nav>
-        <button 
-          onClick={() => send('back')}
-          disabled={currentStage === 'step1'}
-        >
-          Back
-        </button>
-        <button 
-          onClick={() => send('next')}
-          disabled={currentStage === 'complete'}
-        >
-          Next
-        </button>
-      </nav>
-      
-      {currentStage === 'step1' && (
-        <Step1 
-          data={data}
-          onNext={(name) => send('next', { name })}
-        />
-      )}
-      
-      {currentStage === 'step2' && (
-        <Step2 
-          data={data}
-          onNext={(email) => send('next', { ...data, email })}
-          onBack={() => send('back')}
-        />
-      )}
-      
-      {currentStage === 'step3' && (
-        <Step3 
-          data={data}
-          onNext={(preferences) => send('next', { ...data, preferences })}
-          onBack={() => send('back')}
-        />
-      )}
-      
-      {currentStage === 'complete' && (
-        <Complete 
-          data={data}
-          onRestart={() => send('restart')}
-        />
-      )}
-    </div>
-  );
-}
-
-function Step1({ data, onNext }: { data: WizardData; onNext: (name: string) => void }) {
-  const [name, setName] = useState(data.name || '');
+function Step1Component({ data, send }) {
+  const [name, setName] = React.useState(data.name || '');
   
   return (
     <div>
@@ -237,19 +180,15 @@ function Step1({ data, onNext }: { data: WizardData; onNext: (name: string) => v
         value={name}
         onChange={(e) => setName(e.target.value)}
       />
-      <button onClick={() => onNext(name)} disabled={!name}>
+      <button onClick={() => send('next', { name })} disabled={!name}>
         Next
       </button>
     </div>
   );
 }
 
-function Step2({ data, onNext, onBack }: { 
-  data: WizardData; 
-  onNext: (email: string) => void;
-  onBack: () => void;
-}) {
-  const [email, setEmail] = useState(data.email || '');
+function Step2Component({ data, send }) {
+  const [email, setEmail] = React.useState(data.email || '');
   
   return (
     <div>
@@ -260,20 +199,16 @@ function Step2({ data, onNext, onBack }: {
         value={email}
         onChange={(e) => setEmail(e.target.value)}
       />
-      <button onClick={onBack}>Back</button>
-      <button onClick={() => onNext(email)} disabled={!email}>
+      <button onClick={() => send('back')}>Back</button>
+      <button onClick={() => send('next', { email })} disabled={!email}>
         Next
       </button>
     </div>
   );
 }
 
-function Step3({ data, onNext, onBack }: { 
-  data: WizardData; 
-  onNext: (preferences: string[]) => void;
-  onBack: () => void;
-}) {
-  const [preferences, setPreferences] = useState<string[]>(data.preferences || []);
+function Step3Component({ data, send }) {
+  const [preferences, setPreferences] = React.useState<string[]>(data.preferences || []);
   
   const togglePreference = (pref: string) => {
     setPreferences(prev => 
@@ -302,23 +237,40 @@ function Step3({ data, onNext, onBack }: {
         />
         Notifications
       </label>
-      <button onClick={onBack}>Back</button>
-      <button onClick={() => onNext(preferences)}>
+      <button onClick={() => send('back')}>Back</button>
+      <button onClick={() => send('next', { preferences })}>
         Complete
       </button>
     </div>
   );
 }
 
-function Complete({ data, onRestart }: { data: WizardData; onRestart: () => void }) {
+function CompleteComponent({ data, send }) {
   return (
     <div>
       <h2>Complete!</h2>
       <p>Name: {data.name}</p>
       <p>Email: {data.email}</p>
       <p>Preferences: {data.preferences?.join(', ')}</p>
-      <button onClick={onRestart}>Start Over</button>
+      <button onClick={() => send('restart')}>Start Over</button>
     </div>
+  );
+}
+
+function WizardApp() {
+  const engine = new StageFlowEngine<WizardStage, WizardData>(wizardConfig);
+  
+  return (
+    <StageFlowProvider engine={engine}>
+      <StageRenderer
+        stageComponents={{
+          step1: Step1Component,
+          step2: Step2Component,
+          step3: Step3Component,
+          complete: CompleteComponent
+        }}
+      />
+    </StageFlowProvider>
   );
 }
 ```
@@ -366,10 +318,49 @@ const engine = new StageFlowEngine<AppStage, AppData>(config, {
   ]
 });
 
+function FormComponent({ data, send }) {
+  return (
+    <form onSubmit={(e) => {
+      e.preventDefault();
+      const formData = new FormData(e.currentTarget);
+      send('submit', { email: formData.get('email') as string });
+    }}>
+      <input name="email" type="email" defaultValue={data?.email} />
+      <button type="submit">Submit</button>
+    </form>
+  );
+}
+
+function SuccessComponent({ data, send }) {
+  return (
+    <div>
+      <h2>Success!</h2>
+      <p>Email: {data?.email}</p>
+      <button onClick={() => send('reset')}>Reset</button>
+    </div>
+  );
+}
+
+function ErrorComponent({ data, send }) {
+  return (
+    <div>
+      <h2>Error</h2>
+      <p>{data?.error}</p>
+      <button onClick={() => send('retry')}>Retry</button>
+    </div>
+  );
+}
+
 function App() {
   return (
     <StageFlowProvider engine={engine}>
-      <FormComponent />
+      <StageRenderer
+        stageComponents={{
+          form: FormComponent,
+          success: SuccessComponent,
+          error: ErrorComponent
+        }}
+      />
     </StageFlowProvider>
   );
 }
@@ -381,30 +372,53 @@ Render different components based on the current stage:
 
 ```tsx
 function ConditionalApp() {
-  const { currentStage, send, data } = useStageFlow<AppStage, AppData>();
-  
-  // Render based on current stage
-  const renderStage = () => {
-    switch (currentStage) {
-      case 'form':
-        return <FormView onSubmit={(data) => send('submit', data)} />;
-      case 'success':
-        return <SuccessView user={data.user} onReset={() => send('reset')} />;
-      case 'error':
-        return <ErrorView error={data.error} onRetry={() => send('retry')} />;
-      default:
-        return <div>Unknown stage</div>;
-    }
-  };
+  const engine = new StageFlowEngine<AppStage, AppData>(config);
   
   return (
+    <StageFlowProvider engine={engine}>
+      <StageRenderer
+        stageComponents={{
+          form: FormView,
+          success: SuccessView,
+          error: ErrorView
+        }}
+        fallbackComponent={({ currentStage }) => (
+          <div>Unknown stage: {currentStage}</div>
+        )}
+      />
+    </StageFlowProvider>
+  );
+}
+
+function FormView({ data, send }) {
+  return (
+    <form onSubmit={(e) => {
+      e.preventDefault();
+      const formData = new FormData(e.currentTarget);
+      send('submit', { email: formData.get('email') as string });
+    }}>
+      <input name="email" type="email" />
+      <button type="submit">Submit</button>
+    </form>
+  );
+}
+
+function SuccessView({ data, send }) {
+  return (
     <div>
-      <header>
-        <h1>Current Stage: {currentStage}</h1>
-      </header>
-      <main>
-        {renderStage()}
-      </main>
+      <h2>Success!</h2>
+      <p>Email: {data?.email}</p>
+      <button onClick={() => send('reset')}>Reset</button>
+    </div>
+  );
+}
+
+function ErrorView({ data, send }) {
+  return (
+    <div>
+      <h2>Error</h2>
+      <p>{data?.error}</p>
+      <button onClick={() => send('retry')}>Retry</button>
     </div>
   );
 }
@@ -416,8 +430,22 @@ Handle different types of events:
 
 ```tsx
 function EventHandlingExample() {
-  const { send, currentStage } = useStageFlow<AppStage, AppData>();
+  const engine = new StageFlowEngine<AppStage, AppData>(config);
   
+  return (
+    <StageFlowProvider engine={engine}>
+      <StageRenderer
+        stageComponents={{
+          form: FormWithEvents,
+          success: SuccessWithEvents,
+          error: ErrorWithEvents
+        }}
+      />
+    </StageFlowProvider>
+  );
+}
+
+function FormWithEvents({ data, send }) {
   const handleClick = (event: string, data?: any) => {
     send(event, data);
   };
@@ -450,6 +478,24 @@ function EventHandlingExample() {
         <input name="password" type="password" />
         <button type="submit">Login</button>
       </form>
+    </div>
+  );
+}
+
+function SuccessWithEvents({ data, send }) {
+  return (
+    <div>
+      <h2>Success!</h2>
+      <button onClick={() => send('reset')}>Reset</button>
+    </div>
+  );
+}
+
+function ErrorWithEvents({ data, send }) {
+  return (
+    <div>
+      <h2>Error</h2>
+      <button onClick={() => send('retry')}>Retry</button>
     </div>
   );
 }
@@ -491,6 +537,30 @@ const config = {
     }
   ]
 };
+
+function FormWithTransform({ data, send }) {
+  return (
+    <form onSubmit={(e) => {
+      e.preventDefault();
+      const formData = new FormData(e.currentTarget);
+      send('submit', { email: formData.get('email') as string });
+    }}>
+      <input name="email" type="email" defaultValue={data?.email} />
+      <button type="submit">Submit</button>
+    </form>
+  );
+}
+
+function SuccessWithTransform({ data, send }) {
+  return (
+    <div>
+      <h2>Success!</h2>
+      <p>Welcome, {data?.user?.name}!</p>
+      <p>Email: {data?.user?.email}</p>
+      <button onClick={() => send('reset')}>Reset</button>
+    </div>
+  );
+}
 ```
 
 ## Validation
@@ -529,9 +599,7 @@ const config = {
   ]
 };
 
-function FormWithValidation() {
-  const { send, currentStage, data } = useStageFlow<AppStage, AppData>();
-  
+function FormWithValidation({ data, send }) {
   const handleSubmit = async (formData: any) => {
     try {
       await send('submit', formData);
@@ -541,28 +609,26 @@ function FormWithValidation() {
   };
   
   return (
+    <form onSubmit={(e) => {
+      e.preventDefault();
+      const formData = new FormData(e.currentTarget);
+      handleSubmit({
+        email: formData.get('email'),
+        password: formData.get('password')
+      });
+    }}>
+      <input name="email" type="email" required />
+      <input name="password" type="password" required />
+      <button type="submit">Submit</button>
+    </form>
+  );
+}
+
+function ErrorWithValidation({ data, send }) {
+  return (
     <div>
-      {currentStage === 'form' && (
-        <form onSubmit={(e) => {
-          e.preventDefault();
-          const formData = new FormData(e.currentTarget);
-          handleSubmit({
-            email: formData.get('email'),
-            password: formData.get('password')
-          });
-        }}>
-          <input name="email" type="email" required />
-          <input name="password" type="password" required />
-          <button type="submit">Submit</button>
-        </form>
-      )}
-      
-      {currentStage === 'error' && (
-        <div>
-          <p>Error: {data.error}</p>
-          <button onClick={() => send('retry')}>Try Again</button>
-        </div>
-      )}
+      <p>Error: {data?.error}</p>
+      <button onClick={() => send('retry')}>Try Again</button>
     </div>
   );
 }
@@ -598,9 +664,7 @@ const config = {
   ]
 };
 
-function AsyncExample() {
-  const { send, currentStage, data } = useStageFlow<AppStage, AppData>();
-  
+function IdleComponent({ data, send }) {
   const fetchData = async () => {
     send('fetch');
     
@@ -614,34 +678,33 @@ function AsyncExample() {
   };
   
   return (
+    <button onClick={fetchData}>Fetch Data</button>
+  );
+}
+
+function LoadingComponent({ data, send }) {
+  return <div>Loading...</div>;
+}
+
+function SuccessComponent({ data, send }) {
+  return (
     <div>
-      {currentStage === 'idle' && (
-        <button onClick={fetchData}>Fetch Data</button>
-      )}
-      
-      {currentStage === 'loading' && (
-        <div>Loading...</div>
-      )}
-      
-      {currentStage === 'success' && (
-        <div>
-          <h2>Data loaded!</h2>
-          <pre>{JSON.stringify(data, null, 2)}</pre>
-          <button onClick={() => send('reset')}>Reset</button>
-        </div>
-      )}
-      
-      {currentStage === 'error' && (
-        <div>
-          <p>Error: {data.error}</p>
-          <button onClick={() => send('retry')}>Retry</button>
-        </div>
-      )}
+      <h2>Data loaded!</h2>
+      <pre>{JSON.stringify(data, null, 2)}</pre>
+      <button onClick={() => send('reset')}>Reset</button>
+    </div>
+  );
+}
+
+function ErrorComponent({ data, send }) {
+  return (
+    <div>
+      <p>Error: {data?.error}</p>
+      <button onClick={() => send('retry')}>Retry</button>
     </div>
   );
 }
 ```
-
 
 ## Timer Control
 
@@ -683,19 +746,18 @@ const config = {
 
 ### Timer Control Methods
 
-Access timer control functionality through the `useStageFlow` hook:
+Access timer control functionality through stage component props:
 
 ```tsx
-function TimerControlComponent() {
-  const { 
-    currentStage,
-    pauseTimers,
-    resumeTimers,
-    resetTimers,
-    getTimerRemainingTime,
-    areTimersPaused 
-  } = useStageFlow();
-
+function TimerControlComponent({ 
+  data, 
+  send, 
+  pauseTimers,
+  resumeTimers,
+  resetTimers,
+  getTimerRemainingTime,
+  areTimersPaused 
+}) {
   const [remainingTime, setRemainingTime] = React.useState(0);
   const [isPaused, setIsPaused] = React.useState(false);
 
@@ -709,7 +771,7 @@ function TimerControlComponent() {
     }, 100);
 
     return () => clearInterval(interval);
-  }, [getTimerRemainingTime, areTimersPaused, currentStage]);
+  }, [getTimerRemainingTime, areTimersPaused]);
 
   const handleMouseEnter = React.useCallback(() => {
     pauseTimers(); // Pause timers on hover
@@ -728,8 +790,7 @@ function TimerControlComponent() {
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      <h3>Stage: {currentStage}</h3>
-      <p>Timer: {remainingTime}ms {isPaused ? '(Paused)' : ''}</p>
+      <h3>Timer: {remainingTime}ms {isPaused ? '(Paused)' : ''}</h3>
       <button onClick={handleReset}>Reset Timer</button>
     </div>
   );
@@ -741,9 +802,7 @@ function TimerControlComponent() {
 Monitor timer state for UI updates:
 
 ```tsx
-function TimerDisplay() {
-  const { getTimerRemainingTime, areTimersPaused } = useStageFlow();
-  
+function TimerDisplay({ getTimerRemainingTime, areTimersPaused }) {
   const [remainingTime, setRemainingTime] = React.useState(0);
   const [isPaused, setIsPaused] = React.useState(false);
 
@@ -773,31 +832,27 @@ function TimerDisplay() {
 4. **Mouse Interactions**: Use hover events for intuitive pause/resume
 5. **Stage-specific Logic**: Only apply timer controls to relevant stages
 
-
 ## Best Practices
 
 ### 1. Keep Components Simple
 
 ```tsx
 // ✅ Good: Simple, focused components
-function FormStage() {
-  const { send, data } = useStageFlow<AppStage, AppData>();
-  
+function FormComponent({ data, send }) {
   return (
     <form onSubmit={(e) => {
       e.preventDefault();
-      send('submit', { email: 'user@example.com' });
+      const formData = new FormData(e.currentTarget);
+      send('submit', { email: formData.get('email') as string });
     }}>
-      <input type="email" defaultValue={data.email} />
+      <input name="email" type="email" defaultValue={data?.email} />
       <button type="submit">Submit</button>
     </form>
   );
 }
 
 // ❌ Avoid: Complex components with many responsibilities
-function ComplexComponent() {
-  const { currentStage, send, data } = useStageFlow<AppStage, AppData>();
-  
+function ComplexComponent({ data, send }) {
   // Too many responsibilities in one component
   return (
     <div>
@@ -818,31 +873,37 @@ function ComplexComponent() {
 type AppStage = 'form' | 'success' | 'error';
 type AppData = { email?: string; error?: string };
 
-const { send, data } = useStageFlow<AppStage, AppData>();
-
-// TypeScript ensures type safety
-send('submit', { email: 'user@example.com' });
+function FormComponent({ data, send }: StageProps<AppStage, AppData>) {
+  // TypeScript ensures type safety
+  send('submit', { email: 'user@example.com' });
+}
 
 // ❌ Avoid: Using any
-const { send, data } = useStageFlow<any, any>();
+function FormComponent({ data, send }: any) {
+  // No type safety
+}
 ```
 
 ### 3. Handle Errors Gracefully
 
 ```tsx
 // ✅ Good: Proper error handling
-const handleSubmit = async (formData: any) => {
-  try {
-    await send('submit', formData);
-  } catch (error) {
-    await send('fail', { error: error.message });
-  }
-};
+function FormComponent({ data, send }) {
+  const handleSubmit = async (formData: any) => {
+    try {
+      await send('submit', formData);
+    } catch (error) {
+      await send('fail', { error: error.message });
+    }
+  };
+}
 
 // ❌ Avoid: Ignoring errors
-const handleSubmit = async (formData: any) => {
-  send('submit', formData); // No error handling
-};
+function FormComponent({ data, send }) {
+  const handleSubmit = async (formData: any) => {
+    send('submit', formData); // No error handling
+  };
+}
 ```
 
 ### 4. Use Descriptive Stage Names
@@ -857,9 +918,9 @@ type AppStage = 's1' | 's2' | 's3' | 's4';
 
 ## Next Steps
 
-- [TypeScript Usage](/guide/typescript-usage) - Advanced TypeScript features
-- [React Integration](/react/index) - React-specific features
-- [Plugin System](/guide/plugin-system) - Extend functionality with plugins
-- [Middleware](/guide/middleware) - Add processing layers
-- [Effects System](/guide/effects-system) - Handle side effects
-- [Testing](/guide/testing) - Test your stage machines 
+- [TypeScript Usage](/docs/guide/typescript-usage) - Advanced TypeScript features
+- [React Integration](/docs/react/index) - React-specific features
+- [Plugin System](/docs/guide/plugin-system) - Extend functionality with plugins
+- [Middleware](/docs/guide/middleware) - Add processing layers
+
+- [Testing](/docs/guide/testing) - Test your stage machines 

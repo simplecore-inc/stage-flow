@@ -631,6 +631,7 @@ export interface StageFlowEngine<TStage extends string, TData = unknown> {
   getStageEffect(stage: TStage): string | undefined;
   send(event: string, data?: TData): Promise<void>;
   goTo(stage: TStage, data?: TData): Promise<void>;
+  setStageData(data: TData): void;
   subscribe(callback: (stage: TStage, data?: TData) => void): () => void;
   installPlugin(plugin: Plugin<TStage, TData>): Promise<void>;
   uninstallPlugin(name: string): Promise<void>;

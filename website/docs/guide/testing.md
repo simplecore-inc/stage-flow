@@ -499,5 +499,5 @@ describe('Complete Coverage', () => {
 
 ## Next Steps
 
-- [API Reference](/api/) - Complete API documentation
-- [Examples](/examples/) - See testing examples in action 
+- [API Reference](/docs/api/) - Complete API documentation
+- [Examples](/docs/examples/basic/simple-counter) - See testing examples in action 

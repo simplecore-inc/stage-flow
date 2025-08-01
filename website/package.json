@@ -18,6 +18,7 @@
     "@docusaurus/core": "3.8.1",
     "@docusaurus/preset-classic": "3.8.1",
     "@docusaurus/theme-live-codeblock": "^3.8.1",
+    "@docusaurus/plugin-client-redirects": "3.8.1",
     "@mdx-js/react": "^3.0.0",
     "@stage-flow/core": "file:../packages/core",
     "@stage-flow/plugins": "file:../packages/plugins",

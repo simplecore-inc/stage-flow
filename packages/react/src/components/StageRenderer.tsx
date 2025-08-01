@@ -73,9 +73,9 @@ export function StageRenderer<TStage extends string, TData = unknown>({
   disableAnimations = false,
   defaultEffect = DEFAULT_EFFECTS.fade,
   className,
-  style
+  style,
 }: StageRendererProps<TStage, TData>): JSX.Element {
-  const { currentStage, data, send, goTo, isTransitioning } = useStageFlow(engine);
+  const { currentStage, data, send, goTo, isTransitioning, engine: contextEngine } = useStageFlow(engine);
   const animationCleanupRef = useRef<(() => void) | null>(null);
 
   // Clean up any ongoing animations when component unmounts or stage changes
@@ -107,8 +107,10 @@ export function StageRenderer<TStage extends string, TData = unknown>({
     }
 
     // Get stage-specific effect from engine (if available)
-    if (engine) {
-      const stageEffectName = engine.getCurrentStageEffect();
+    // Use provided engine or get from context
+    const actualEngine = engine || contextEngine;
+    if (actualEngine) {
+      const stageEffectName = actualEngine.getCurrentStageEffect();
       if (stageEffectName) {
         // Try to resolve the effect from the registry
         const resolvedEffect = effectRegistry.create(stageEffectName);

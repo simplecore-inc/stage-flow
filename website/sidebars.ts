@@ -22,17 +22,17 @@ const sidebars: SidebarsConfig = {
     {
       type: "category",
       label: "Guides",
-      items: ["guide/basic-usage", "guide/typescript-usage", "guide/plugin-system", "guide/middleware", "guide/effects-system", "guide/testing"],
+      items: ["guide/basic-usage", "guide/typescript-usage", "guide/plugin-system", "guide/middleware", "guide/testing"],
     },
     {
       type: "category",
       label: "React Integration",
-      items: ["react/index", "react/components", "react/hooks", "react/patterns", "react/performance", "react/integration", "react/best-practices"],
+      items: ["react/index", "react/components", "react/hooks", "react/react-patterns", "react/performance", "react/integration", "react/best-practices"],
     },
     {
       type: "category",
       label: "API Reference",
-      items: ["api/api-index", "api/api-core", "api/api-react", "api/api-plugins", "api/api-testing"],
+      items: ["api/api", "api/api-core", "api/api-react", "api/api-plugins", "api/api-testing"],
     },
     {
       type: "category",
@@ -51,6 +51,7 @@ const sidebars: SidebarsConfig = {
             "examples/advanced/examples-authentication-flow",
             "examples/advanced/examples-shopping-cart",
             "examples/advanced/setup-wizard",
+            "examples/advanced/mbti-test",
           ],
         },
         {
@@ -61,12 +62,7 @@ const sidebars: SidebarsConfig = {
         {
           type: "category",
           label: "Performance Examples",
-          items: ["examples/performance/lazy-loading", "examples/performance/memoization"],
-        },
-        {
-          type: "category",
-          label: "Integration Examples",
-          items: ["examples/integration/react-router-integration", "examples/integration/redux-integration", "examples/integration/context-api-integration"],
+          items: ["examples/performance/lazy-loading"],
         },
       ],
     },

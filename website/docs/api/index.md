@@ -1,5 +1,5 @@
 ---
-id: api-index
+id: api
 title: API Reference
 sidebar_label: Overview
 ---
@@ -190,49 +190,6 @@ const config: StageFlowConfig<'idle' | 'loading' | 'success'> = {
 };
 ```
 
-### From Redux
-
-```tsx
-// Redux
-const reducer = (state = initialState, action) => {
-  switch (action.type) {
-    case 'START_LOADING':
-      return { ...state, stage: 'loading' };
-    case 'LOADING_SUCCESS':
-      return { ...state, stage: 'success', data: action.payload };
-    case 'LOADING_ERROR':
-      return { ...state, stage: 'error', error: action.payload };
-    default:
-      return state;
-  }
-};
-
-// Stage Flow
-const config: StageFlowConfig<'idle' | 'loading' | 'success' | 'error'> = {
-  initial: 'idle',
-  stages: [
-    {
-      name: 'idle',
-      transitions: [{ target: 'loading', event: 'start' }]
-    },
-    {
-      name: 'loading',
-      transitions: [
-        { target: 'success', event: 'success' },
-        { target: 'error', event: 'error' }
-      ]
-    },
-    {
-      name: 'success',
-      transitions: [{ target: 'idle', event: 'reset' }]
-    },
-    {
-      name: 'error',
-      transitions: [{ target: 'idle', event: 'retry' }]
-    }
-  ]
-};
-```
 
 ## Type Safety
 

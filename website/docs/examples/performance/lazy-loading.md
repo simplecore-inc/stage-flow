@@ -24,55 +24,50 @@ This example demonstrates how to use React's lazy loading with Stage Flow to imp
 ```jsx live
 // import React, { lazy, Suspense } from 'react';
 // import { StageFlowEngine } from '@stage-flow/core';
-// import { StageFlowProvider, useStageFlow } from '@stage-flow/react';
+// import { StageFlowProvider, useStageFlow, StageRenderer } from '@stage-flow/react';
 
 function LazyLoadingExample() {
-  const engineRef = React.useRef<StageFlowEngine>();
+  // Create engine directly without useRef
+  const engine = new StageFlowEngine({
+    initial: "login",
+    stages: [
+      {
+        name: "login",
+        transitions: [{ target: "dashboard", event: "login" }],
+      },
+      {
+        name: "dashboard",
+        transitions: [
+          { target: "profile", event: "navigateToProfile" },
+          { target: "settings", event: "navigateToSettings" },
+          { target: "login", event: "logout" },
+        ],
+      },
+      {
+        name: "profile",
+        transitions: [
+          { target: "dashboard", event: "navigateToDashboard" },
+          { target: "settings", event: "navigateToSettings" },
+          { target: "login", event: "logout" },
+        ],
+      },
+      {
+        name: "settings",
+        transitions: [
+          { target: "dashboard", event: "navigateToDashboard" },
+          { target: "profile", event: "navigateToProfile" },
+          { target: "login", event: "logout" },
+        ],
+      },
+    ],
+  });
   
-  if (!engineRef.current) {
-    engineRef.current = new StageFlowEngine({
-      initial: "login",
-      stages: [
-        {
-          name: "login",
-          transitions: [{ target: "dashboard", event: "login" }],
-        },
-        {
-          name: "dashboard",
-          transitions: [
-            { target: "profile", event: "navigateToProfile" },
-            { target: "settings", event: "navigateToSettings" },
-            { target: "login", event: "logout" },
-          ],
-        },
-        {
-          name: "profile",
-          transitions: [
-            { target: "dashboard", event: "navigateToDashboard" },
-            { target: "settings", event: "navigateToSettings" },
-            { target: "login", event: "logout" },
-          ],
-        },
-        {
-          name: "settings",
-          transitions: [
-            { target: "dashboard", event: "navigateToDashboard" },
-            { target: "profile", event: "navigateToProfile" },
-            { target: "login", event: "logout" },
-          ],
-        },
-      ],
-    });
-    
-    engineRef.current.start();
-  }
-
-  const { currentStage, send } = useStageFlow(engineRef.current);
+  engine.start();
 
   // Lazy load components
   const LoginPage = React.lazy(() =>
     Promise.resolve({
-      default: () => (
+      default: ({ data, send }) => (
         <div style={{ padding: "20px", textAlign: "center" }}>
           <h3 style={{ color: "#333", margin: "0 0 15px 0" }}>Login Page</h3>
           <p style={{ color: "#666", margin: "0 0 20px 0" }}>This component is lazy loaded.</p>
@@ -96,7 +91,7 @@ function LazyLoadingExample() {
 
   const DashboardPage = React.lazy(() =>
     Promise.resolve({
-      default: () => (
+      default: ({ data, send }) => (
         <div style={{ padding: "20px" }}>
           <h3 style={{ color: "#333", margin: "0 0 15px 0" }}>Dashboard</h3>
           <p style={{ color: "#666", margin: "0 0 20px 0" }}>This dashboard component is lazy loaded for better performance.</p>
@@ -131,6 +126,35 @@ function LazyLoadingExample() {
               <p style={{ color: "#666", margin: "0" }}>Generate reports</p>
             </div>
           </div>
+          
+          <div style={{ marginTop: "20px", display: "flex", gap: "10px" }}>
+            <button
+              onClick={() => send("navigateToProfile")}
+              style={{
+                padding: "8px 16px",
+                backgroundColor: "#007bff",
+                color: "white",
+                border: "none",
+                borderRadius: "4px",
+                cursor: "pointer",
+              }}
+            >
+              Go to Profile
+            </button>
+            <button
+              onClick={() => send("navigateToSettings")}
+              style={{
+                padding: "8px 16px",
+                backgroundColor: "#28a745",
+                color: "white",
+                border: "none",
+                borderRadius: "4px",
+                cursor: "pointer",
+              }}
+            >
+              Go to Settings
+            </button>
+          </div>
         </div>
       ),
     })
@@ -138,7 +162,7 @@ function LazyLoadingExample() {
 
   const ProfilePage = React.lazy(() =>
     Promise.resolve({
-      default: () => (
+      default: ({ data, send }) => (
         <div style={{ padding: "20px" }}>
           <h3 style={{ color: "#333", margin: "0 0 15px 0" }}>Profile</h3>
           <p style={{ color: "#666", margin: "0 0 20px 0" }}>This profile component is lazy loaded.</p>
@@ -161,6 +185,35 @@ function LazyLoadingExample() {
               <strong style={{ color: "#333" }}>Member since:</strong> January 2024
             </p>
           </div>
+          
+          <div style={{ marginTop: "20px", display: "flex", gap: "10px" }}>
+            <button
+              onClick={() => send("navigateToDashboard")}
+              style={{
+                padding: "8px 16px",
+                backgroundColor: "#007bff",
+                color: "white",
+                border: "none",
+                borderRadius: "4px",
+                cursor: "pointer",
+              }}
+            >
+              Back to Dashboard
+            </button>
+            <button
+              onClick={() => send("navigateToSettings")}
+              style={{
+                padding: "8px 16px",
+                backgroundColor: "#28a745",
+                color: "white",
+                border: "none",
+                borderRadius: "4px",
+                cursor: "pointer",
+              }}
+            >
+              Go to Settings
+            </button>
+          </div>
         </div>
       ),
     })
@@ -168,7 +221,7 @@ function LazyLoadingExample() {
 
   const SettingsPage = React.lazy(() =>
     Promise.resolve({
-      default: () => (
+      default: ({ data, send }) => (
         <div style={{ padding: "20px" }}>
           <h3 style={{ color: "#333", margin: "0 0 15px 0" }}>Settings</h3>
           <p style={{ color: "#666", margin: "0 0 20px 0" }}>This settings component is lazy loaded.</p>
@@ -202,28 +255,42 @@ function LazyLoadingExample() {
               SMS notifications
             </label>
           </div>
+          
+          <div style={{ marginTop: "20px", display: "flex", gap: "10px" }}>
+            <button
+              onClick={() => send("navigateToDashboard")}
+              style={{
+                padding: "8px 16px",
+                backgroundColor: "#007bff",
+                color: "white",
+                border: "none",
+                borderRadius: "4px",
+                cursor: "pointer",
+              }}
+            >
+              Back to Dashboard
+            </button>
+            <button
+              onClick={() => send("navigateToProfile")}
+              style={{
+                padding: "8px 16px",
+                backgroundColor: "#28a745",
+                color: "white",
+                border: "none",
+                borderRadius: "4px",
+                cursor: "pointer",
+              }}
+            >
+              Go to Profile
+            </button>
+          </div>
         </div>
       ),
     })
   );
 
-  const renderStage = () => {
-    switch (currentStage) {
-      case "login":
-        return <LoginPage />;
-      case "dashboard":
-        return <DashboardPage />;
-      case "profile":
-        return <ProfilePage />;
-      case "settings":
-        return <SettingsPage />;
-      default:
-        return <div>Loading...</div>;
-    }
-  };
-
   return (
-    <StageFlowProvider engine={engineRef.current}>
+    <StageFlowProvider engine={engine}>
       <div
         style={{
           padding: "20px",
@@ -236,67 +303,6 @@ function LazyLoadingExample() {
         <h2 style={{ margin: "0 0 20px 0", color: "#333" }}>
           Lazy Loading Example
         </h2>
-
-        <div style={{ marginBottom: "20px" }}>
-          <h3 style={{ margin: "0 0 15px 0", color: "#333" }}>
-            Current Stage: {currentStage}
-          </h3>
-
-          <div style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
-            <button
-              onClick={() => send("login")}
-              style={{
-                padding: "8px 16px",
-                backgroundColor: currentStage === "login" ? "#007bff" : "#f8f9fa",
-                color: currentStage === "login" ? "white" : "#333",
-                border: "1px solid #ddd",
-                borderRadius: "4px",
-                cursor: "pointer",
-              }}
-            >
-              Login
-            </button>
-            <button
-              onClick={() => send("navigateToDashboard")}
-              style={{
-                padding: "8px 16px",
-                backgroundColor: currentStage === "dashboard" ? "#007bff" : "#f8f9fa",
-                color: currentStage === "dashboard" ? "white" : "#333",
-                border: "1px solid #ddd",
-                borderRadius: "4px",
-                cursor: "pointer",
-              }}
-            >
-              Dashboard
-            </button>
-            <button
-              onClick={() => send("navigateToProfile")}
-              style={{
-                padding: "8px 16px",
-                backgroundColor: currentStage === "profile" ? "#007bff" : "#f8f9fa",
-                color: currentStage === "profile" ? "white" : "#333",
-                border: "1px solid #ddd",
-                borderRadius: "4px",
-                cursor: "pointer",
-              }}
-            >
-              Profile
-            </button>
-            <button
-              onClick={() => send("navigateToSettings")}
-              style={{
-                padding: "8px 16px",
-                backgroundColor: currentStage === "settings" ? "#007bff" : "#f8f9fa",
-                color: currentStage === "settings" ? "white" : "#333",
-                border: "1px solid #ddd",
-                borderRadius: "4px",
-                cursor: "pointer",
-              }}
-            >
-              Settings
-            </button>
-          </div>
-        </div>
 
         <div
           style={{
@@ -332,7 +338,14 @@ function LazyLoadingExample() {
               </div>
             }
           >
-            {renderStage()}
+            <StageRenderer
+              stageComponents={{
+                login: LoginPage,
+                dashboard: DashboardPage,
+                profile: ProfilePage,
+                settings: SettingsPage,
+              }}
+            />
           </React.Suspense>
         </div>
       </div>
@@ -343,21 +356,17 @@ function LazyLoadingExample() {
 
 ## Code Explanation
 
-### Engine Setup with useRef
+### Engine Setup
 
-The Stage Flow Engine is created using `useRef` to ensure the same instance persists across re-renders:
+The Stage Flow Engine is created directly:
 
 ```javascript
-const engineRef = React.useRef<StageFlowEngine>();
+const engine = new StageFlowEngine({
+  initial: "login",
+  stages: [...]
+});
 
-if (!engineRef.current) {
-  engineRef.current = new StageFlowEngine({
-    initial: "login",
-    stages: [...]
-  });
-  
-  engineRef.current.start();
-}
+engine.start();
 ```
 
 ### Lazy Loading Setup
@@ -384,18 +393,17 @@ Suspense provides a fallback during component loading:
 
 ### Stage-Based Rendering
 
-Components are rendered based on the current stage:
+Components are rendered using StageRenderer:
 
 ```javascript
-const renderStage = () => {
-  switch (currentStage) {
-    case "login":
-      return <LoginPage />;
-    case "dashboard":
-      return <DashboardPage />;
-    // ... other cases
-  }
-};
+<StageRenderer
+  stageComponents={{
+    login: LoginPage,
+    dashboard: DashboardPage,
+    profile: ProfilePage,
+    settings: SettingsPage,
+  }}
+/>
 ```
 
 ## Benefits
@@ -409,4 +417,4 @@ const renderStage = () => {
 
 - **[Memoization](./memoization.md)** - Using React.memo and useCallback
 
-- **[Basic Examples](../basic/basic)** - Simple stage machine examples 
+- **[Basic Examples](/docs/examples/basic/simple-counter)** - Simple stage machine examples 

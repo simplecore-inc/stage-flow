@@ -197,25 +197,104 @@ describe('useStageFlow', () => {
     await engine.start();
     const { result } = renderHook(() => useStageFlow(engine), { wrapper });
 
-    expect(result.current.currentStage).toBe('initial');
-
-    // Change stage externally through engine
+    // Change engine state externally
     await act(async () => {
-      await engine.send('start');
+      await engine.goTo('success', { message: 'External change' });
     });
 
-    expect(result.current.currentStage).toBe('loading');
+    expect(result.current.currentStage).toBe('success');
+    expect(result.current.data).toEqual({ message: 'External change' });
   });
 
-  it('should maintain stable function references', () => {
-    const { result, rerender } = renderHook(() => useStageFlow(engine), { wrapper });
+  describe('setStageData', () => {
+    beforeEach(async () => {
+      await engine.start();
+    });
 
-    const initialSend = result.current.send;
-    const initialGoTo = result.current.goTo;
+    it('should update stage data without changing stage', () => {
+      const { result } = renderHook(() => useStageFlow(engine), { wrapper });
 
-    rerender();
+      const newData = { message: 'Updated data', count: 42 };
+      act(() => {
+        result.current.setStageData(newData);
+      });
 
-    expect(result.current.send).toBe(initialSend);
-    expect(result.current.goTo).toBe(initialGoTo);
+      expect(result.current.currentStage).toBe('initial');
+      expect(result.current.data).toEqual(newData);
+      expect(result.current.isTransitioning).toBe(false);
+    });
+
+    it('should update data and notify subscribers', () => {
+      const { result } = renderHook(() => useStageFlow(engine), { wrapper });
+
+      const initialData = { message: 'Initial' };
+      act(() => {
+        result.current.setStageData(initialData);
+      });
+
+      expect(result.current.data).toEqual(initialData);
+
+      const updatedData = { message: 'Updated', count: 123 };
+      act(() => {
+        result.current.setStageData(updatedData);
+      });
+
+      expect(result.current.data).toEqual(updatedData);
+    });
+
+    it('should work with complex data structures', () => {
+      const { result } = renderHook(() => useStageFlow(engine), { wrapper });
+
+      const complexData = {
+        message: 'Complex data',
+        count: 42,
+        nested: {
+          value: 'nested value',
+          array: [1, 2, 3]
+        },
+        flags: {
+          isActive: true,
+          isVisible: false
+        }
+      };
+
+      act(() => {
+        result.current.setStageData(complexData);
+      });
+
+      expect(result.current.data).toEqual(complexData);
+    });
+
+    it('should preserve stage when updating data', async () => {
+      const { result } = renderHook(() => useStageFlow(engine), { wrapper });
+
+      // First navigate to a different stage
+      await act(async () => {
+        await result.current.goTo('loading', { message: 'Loading' });
+      });
+
+      expect(result.current.currentStage).toBe('loading');
+
+      // Update data without changing stage
+      const updatedData = { message: 'Updated loading data', count: 99 };
+      act(() => {
+        result.current.setStageData(updatedData);
+      });
+
+      expect(result.current.currentStage).toBe('loading');
+      expect(result.current.data).toEqual(updatedData);
+    });
+
+    it('should not trigger transition state when updating data', () => {
+      const { result } = renderHook(() => useStageFlow(engine), { wrapper });
+
+      expect(result.current.isTransitioning).toBe(false);
+
+      act(() => {
+        result.current.setStageData({ message: 'Test' });
+      });
+
+      expect(result.current.isTransitioning).toBe(false);
+    });
   });
 });

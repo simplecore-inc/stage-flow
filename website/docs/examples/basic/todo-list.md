@@ -31,6 +31,8 @@ This example demonstrates a todo list with add, complete, and delete functionali
 function TodoList() {
   // Individual stage component for the todo list
   function IdleStage({ data, send }) {
+    const { engine } = useStageFlow();
+
     const handleAddTodo = React.useCallback(() => {
       if (data?.newTodo?.trim()) {
         const todo = {
@@ -38,28 +40,28 @@ function TodoList() {
           text: data.newTodo.trim(),
           completed: false,
         };
-        send("addTodo", {
+        engine.setStageData({
           todos: [...(data?.todos || []), todo],
           newTodo: "",
         });
       }
-    }, [data?.newTodo, data?.todos, send]);
+    }, [data?.newTodo, data?.todos, engine]);
 
     const handleCompleteTodo = React.useCallback((id) => {
       const updatedTodos = (data?.todos || []).map((todo) =>
         todo.id === id ? { ...todo, completed: !todo.completed } : todo
       );
-      send("completeTodo", { todos: updatedTodos });
-    }, [data?.todos, send]);
+      engine.setStageData({ todos: updatedTodos });
+    }, [data?.todos, engine]);
 
     const handleDeleteTodo = React.useCallback((id) => {
       const updatedTodos = (data?.todos || []).filter((todo) => todo.id !== id);
-      send("deleteTodo", { todos: updatedTodos });
-    }, [data?.todos, send]);
+      engine.setStageData({ todos: updatedTodos });
+    }, [data?.todos, engine]);
 
     const handleUpdateNewTodo = React.useCallback((value) => {
-      send("updateNewTodo", { ...data, newTodo: value });
-    }, [data, send]);
+      engine.setStageData({ ...data, newTodo: value });
+    }, [data, engine]);
 
     const handleKeyPress = React.useCallback((e) => {
       if (e.key === "Enter") {
@@ -206,6 +208,8 @@ function TodoList() {
 
   // Saved stage component
   function SavedStage({ data, send }) {
+    const { engine } = useStageFlow();
+
     const handleBack = React.useCallback(() => {
       send("back", { ...data });
     }, [data, send]);
@@ -327,26 +331,9 @@ function TodoList() {
   return (
     <StageFlowProvider engine={engine}>
       <StageRenderer
-        currentStage="idle"
         stageComponents={{
           idle: IdleStage,
           saved: SavedStage,
-        }}
-        data={{ todos: [], newTodo: "" }}
-        send={(event, data) => {
-          if (event === "addTodo") {
-            engine.send("addTodo", data);
-          } else if (event === "completeTodo") {
-            engine.send("completeTodo", data);
-          } else if (event === "deleteTodo") {
-            engine.send("deleteTodo", data);
-          } else if (event === "updateNewTodo") {
-            engine.send("updateNewTodo", data);
-          } else if (event === "save") {
-            engine.send("save", data);
-          } else if (event === "back") {
-            engine.send("back", data);
-          }
         }}
       />
     </StageFlowProvider>

@@ -57,7 +57,6 @@ function App() {
   return (
     <StageFlowProvider engine={engine}>
       <StageRenderer
-        engine={engine}
         stageComponents={{
           idle: IdleView,
           loading: LoadingView,
@@ -139,9 +138,9 @@ function ErrorView({ stage, data, send, goTo, isTransitioning }) {
 - **[useStageEffect](./hooks.md#usestageeffect)** - Animation effect configuration
 
 ### Advanced Patterns
-- **[Custom Hooks](./patterns.md#custom-hooks)** - Reusable logic encapsulation
-- **[Context Providers](./patterns.md#context-providers)** - Complex state sharing
-- **[Higher-Order Components](./patterns.md#higher-order-components)** - Component composition
+- **[Custom Hooks](./patterns.md)** - Reusable logic encapsulation
+- **[Context Providers](./patterns.md)** - Complex state sharing
+- **[Higher-Order Components](./patterns.md)** - Component composition
 
 ### Performance & Integration
 - **[Performance Optimization](./performance.md)** - Memoization and lazy loading
@@ -159,11 +158,11 @@ function ErrorView({ stage, data, send, goTo, isTransitioning }) {
 
 ## Related Guides
 
-- **[Getting Started](/guide/getting-started)** - Set up your first Stage Flow project
-- **[Core Concepts](/guide/core-concepts)** - Learn the fundamental concepts
-- **[Basic Usage](/guide/basic-usage)** - See basic usage patterns
-- **[TypeScript Usage](/guide/typescript-usage)** - Advanced TypeScript features
-- **[Plugin System](/guide/plugin-system)** - Extend functionality with plugins
-- **[Middleware](/guide/middleware)** - Add processing layers
-- **[Effects System](/guide/effects-system)** - Handle side effects
-- **[Testing](/guide/testing)** - Test your stage machines 
+- **[Getting Started](/docs/guide/getting-started)** - Set up your first Stage Flow project
+- **[Core Concepts](/docs/guide/core-concepts)** - Learn the fundamental concepts
+- **[Basic Usage](/docs/guide/basic-usage)** - See basic usage patterns
+- **[TypeScript Usage](/docs/guide/typescript-usage)** - Advanced TypeScript features
+- **[Plugin System](/docs/guide/plugin-system)** - Extend functionality with plugins
+- **[Middleware](/docs/guide/middleware)** - Add processing layers
+
+- **[Testing](/docs/guide/testing)** - Test your stage machines 

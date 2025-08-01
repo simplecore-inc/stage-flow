@@ -12,6 +12,8 @@ Stage Flow is built around several core concepts that work together to provide a
 - **Engine**: The core that manages everything
 - **Configuration**: How you define your stage machine
 - **Lifecycle**: The events that occur during stage changes
+- **StageRenderer**: The component that automatically renders stages
+- **StageFlowProvider**: The context provider that makes the engine available
 
 ## Stages
 
@@ -101,13 +103,14 @@ interface AppData {
 }
 
 // Data is automatically typed and validated
-const { data, send } = useStageFlow<AppStage, AppData>();
+// Stage components receive data as props
+function FormComponent({ data, send }) {
+  // Access current data
+  console.log(data?.email);
 
-// Access current data
-console.log(data?.email);
-
-// Send data with events
-send('submit', { email: 'user@example.com', password: 'secret' });
+  // Send data with events
+  send('submit', { email: 'user@example.com', password: 'secret' });
+}
 ```
 
 ## Engine
@@ -139,6 +142,99 @@ The engine can be configured with:
 
 - **plugins**: Extend functionality (logging, persistence, analytics)
 - **middleware**: Process data and events
+
+## StageFlowProvider
+
+The StageFlowProvider is a React context provider that makes the engine available to all child components.
+
+```tsx
+import { StageFlowProvider } from '@stage-flow/react';
+
+function App() {
+  const engine = new StageFlowEngine(config);
+  
+  return (
+    <StageFlowProvider engine={engine}>
+      <StageRenderer
+        stageComponents={{
+          loading: LoadingComponent,
+          form: FormComponent,
+          success: SuccessComponent,
+          error: ErrorComponent
+        }}
+      />
+    </StageFlowProvider>
+  );
+}
+```
+
+## StageRenderer
+
+The StageRenderer is the main component that automatically renders the appropriate stage component based on the current stage.
+
+```tsx
+import { StageRenderer } from '@stage-flow/react';
+
+function App() {
+  return (
+    <StageFlowProvider engine={engine}>
+      <StageRenderer
+        stageComponents={{
+          loading: LoadingComponent,
+          form: FormComponent,
+          success: SuccessComponent,
+          error: ErrorComponent
+        }}
+        // Optional props
+        effects={{
+          form: { type: 'fade', duration: 300 }
+        }}
+        fallbackComponent={DefaultComponent}
+      />
+    </StageFlowProvider>
+  );
+}
+```
+
+### StageRenderer Props
+
+- **stageComponents**: Object mapping stage names to React components
+- **effects**: Optional animation effects for stage transitions
+- **fallbackComponent**: Component to render for undefined stages
+- **engine**: Optional engine prop (if not using context)
+
+## Stage Components
+
+Stage components are React components that receive the current data and send function as props.
+
+```tsx
+function FormComponent({ data, send }) {
+  const handleSubmit = (email: string, password: string) => {
+    send('submit', { email, password });
+  };
+  
+  return (
+    <form onSubmit={(e) => {
+      e.preventDefault();
+      const formData = new FormData(e.currentTarget);
+      handleSubmit(
+        formData.get('email') as string,
+        formData.get('password') as string
+      );
+    }}>
+      <input name="email" type="email" defaultValue={data?.email} />
+      <input name="password" type="password" />
+      <button type="submit">Submit</button>
+    </form>
+  );
+}
+```
+
+### Stage Component Props
+
+- **data**: Current stage data
+- **send**: Function to send events to the engine
+- **currentStage**: Current stage name (optional)
 
 ## Configuration
 
@@ -258,18 +354,16 @@ const config: StageFlowConfig<AppStage, AppData> = {
 Stage Flow automatically infers types from your configuration:
 
 ```tsx
-// Types are automatically inferred
-const { currentStage, send, data } = useStageFlow<AppStage, AppData>();
-
-// TypeScript knows the current stage
-if (currentStage === 'form') {
+// Types are automatically inferred in stage components
+function FormComponent({ data, send }: StageProps<AppStage, AppData>) {
+  // TypeScript knows the current stage
   // TypeScript knows data has email and password
   console.log(data?.email, data?.password);
-}
 
-// TypeScript validates event names
-send('submit', { email: 'user@example.com' }); // ✅ Valid
-send('invalid', {}); // ❌ TypeScript error
+  // TypeScript validates event names
+  send('submit', { email: 'user@example.com' }); // ✅ Valid
+  send('invalid', {}); // ❌ TypeScript error
+}
 ```
 
 ## Error Handling
@@ -334,7 +428,9 @@ function App() {
         </div>
       )}
     >
-      <FormComponent />
+      <StageFlowProvider engine={engine}>
+        <StageRenderer stageComponents={stageComponents} />
+      </StageFlowProvider>
     </StageErrorBoundary>
   );
 }
@@ -347,20 +443,17 @@ Stage Flow is optimized for performance with several built-in optimizations.
 ### Minimal Re-renders
 
 ```tsx
-function FormComponent() {
-  const { currentStage, send, data } = useStageFlow<AppStage, AppData>();
-  
-  // Only re-renders when currentStage changes
-  if (currentStage === 'form') {
-    return <FormForm data={data} onSubmit={(data) => send('submit', data)} />;
-  }
-  
-  // Only re-renders when currentStage changes
-  if (currentStage === 'success') {
-    return <SuccessView user={data.user} onReset={() => send('reset')} />;
-  }
-  
-  return null;
+function FormComponent({ data, send }) {
+  // Only re-renders when data changes
+  return (
+    <form onSubmit={(e) => {
+      e.preventDefault();
+      send('submit', { email: 'user@example.com' });
+    }}>
+      <input type="email" defaultValue={data?.email} />
+      <button type="submit">Submit</button>
+    </form>
+  );
 }
 ```
 
@@ -548,18 +641,26 @@ Stage Flow provides comprehensive timer control methods:
 Timers are managed internally by the StageFlowEngine and provide real-time state information:
 
 ```tsx
-// Real-time timer monitoring
-const { getTimerRemainingTime, areTimersPaused } = useStageFlow();
+// Real-time timer monitoring in stage components
+function LoadingComponent({ data, send, getTimerRemainingTime, areTimersPaused }) {
+  const [remaining, setRemaining] = React.useState(0);
+  const [paused, setPaused] = React.useState(false);
 
-React.useEffect(() => {
-  const interval = setInterval(() => {
-    const remaining = getTimerRemainingTime();
-    const paused = areTimersPaused();
-    // Update UI with timer state
-  }, 100);
-  
-  return () => clearInterval(interval);
-}, [getTimerRemainingTime, areTimersPaused]);
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setRemaining(getTimerRemainingTime());
+      setPaused(areTimersPaused());
+    }, 100);
+    
+    return () => clearInterval(interval);
+  }, [getTimerRemainingTime, areTimersPaused]);
+
+  return (
+    <div>
+      <p>Loading... {remaining}ms {paused ? '(Paused)' : ''}</p>
+    </div>
+  );
+}
 ```
 
 ### Timer Best Practices
@@ -572,9 +673,9 @@ React.useEffect(() => {
 
 ## Next Steps
 
-- [Basic Usage](/guide/basic-usage) - See basic usage patterns
-- [TypeScript Usage](/guide/typescript-usage) - Advanced TypeScript features
-- [React Integration](/react/index) - React-specific features
-- [Plugin System](/guide/plugin-system) - Extend functionality with plugins
-- [Middleware](/guide/middleware) - Add processing layers
-- [Effects System](/guide/effects-system) - Handle side effects 
+- [Basic Usage](/docs/guide/basic-usage) - See basic usage patterns
+- [TypeScript Usage](/docs/guide/typescript-usage) - Advanced TypeScript features
+- [React Integration](/docs/react/index) - React-specific features
+- [Plugin System](/docs/guide/plugin-system) - Extend functionality with plugins
+- [Middleware](/docs/guide/middleware) - Add processing layers
+ 

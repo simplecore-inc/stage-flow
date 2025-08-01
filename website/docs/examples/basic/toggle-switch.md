@@ -201,9 +201,6 @@ function ToggleSwitch() {
   return (
     <StageFlowProvider engine={engine}>
       <StageRenderer
-        currentStage={engine.currentStage}
-        data={engine.data}
-        send={engine.send.bind(engine)}
         stageComponents={{
           off: OffStage,
           on: OnStage,
@@ -315,4 +312,4 @@ style={{
 
 - **[Simple Counter](./simple-counter.md)** - Basic increment/decrement functionality
 - **[Todo List](./todo-list.md)** - Add, complete, and delete items with stage components
-- **[Advanced Examples](../advanced/overview)** - Complex multi-stage examples
+- **[Advanced Examples](/docs/examples/advanced/examples-multi-step-form)** - Complex multi-stage examples

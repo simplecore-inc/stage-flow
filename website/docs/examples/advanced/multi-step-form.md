@@ -22,17 +22,112 @@ This example demonstrates a comprehensive multi-step form with the following fea
 - **Progress Indicator**: Visual progress indicator at the top
 - **Debug Interface**: Interactive debug panel for real-time state monitoring and manipulation
 
-## Key Features to Observe
+## Key Features
 
-1. **Individual Stage Components**: Each stage (personal, contact, preferences, confirmation, complete) is a separate component
-2. **StageRenderer Usage**: Automatic stage rendering without conditional rendering
-3. **Multi-Stage Flow**: Watch the progression through stages: 'personal' → 'contact' → 'preferences' → 'confirmation' → 'complete'
-4. **Form Validation**: See how validation errors are handled and displayed
-5. **Data Persistence**: Notice how form data persists across stage transitions
-6. **Error Handling**: Watch how the form handles validation errors
-7. **Navigation**: Observe the back/forward navigation between stages
-8. **Progress Indicator**: See the visual progress indicator at the top
-9. **Debug Interface**: Interactive debug panel for real-time state monitoring and manipulation
+This example demonstrates several advanced Stage Flow patterns:
+
+### 1. **Data Management with `setStageData`**
+
+The form uses `engine.setStageData()` to update form data without triggering stage transitions:
+
+```tsx
+const handleNameChange = React.useCallback(
+  e => {
+    const updatedData = { ...(data || {}), name: e.target.value };
+    engine.setStageData(updatedData); // Updates data without stage change
+  },
+  [data, engine]
+);
+```
+
+This allows for:
+- **Real-time form updates**: Data changes immediately without transitions
+- **Validation feedback**: Error states can be updated instantly
+- **Performance**: No unnecessary stage transitions for data updates
+
+### 2. **Multi-stage Form Flow**
+
+The form progresses through multiple stages with data persistence:
+
+```tsx
+// Personal stage
+{ name: 'personal', transitions: [{ target: 'contact', event: 'next' }] }
+
+// Contact stage  
+{ name: 'contact', transitions: [
+  { target: 'personal', event: 'back' },
+  { target: 'review', event: 'next' }
+]}
+
+// Review stage
+{ name: 'review', transitions: [
+  { target: 'contact', event: 'back' },
+  { target: 'success', event: 'submit' }
+]}
+```
+
+### 3. **Error Handling**
+
+Each stage validates data and shows appropriate errors:
+
+```tsx
+const handleNext = React.useCallback(() => {
+  if (!data?.name || data.name.trim() === "") {
+    const dataWithError = { ...(data || {}), errors: { personal: "Name is required" } };
+    engine.setStageData(dataWithError); // Update with error state
+    return;
+  }
+  // Proceed to next stage
+  send("next", updatedData);
+}, [data, send, engine]);
+```
+
+### 4. **Progress Tracking**
+
+The form shows current progress and allows navigation:
+
+```tsx
+function ProgressIndicator({ currentStage }) {
+  const stages = ['personal', 'contact', 'review', 'success'];
+  const currentIndex = stages.indexOf(currentStage);
+  
+  return (
+    <div className="progress-bar">
+      {stages.map((stage, index) => (
+        <div key={stage} className={`step ${index <= currentIndex ? 'active' : ''}`}>
+          {stage}
+        </div>
+      ))}
+    </div>
+  );
+}
+```
+
+## Usage
+
+```tsx
+import { StageFlowEngine } from '@stage-flow/core';
+import { StageFlowProvider, useStageFlow } from '@stage-flow/react';
+
+// Create engine with form configuration
+const engine = new StageFlowEngine(formConfig);
+
+function App() {
+  return (
+    <StageFlowProvider engine={engine}>
+      <MultiStepForm />
+    </StageFlowProvider>
+  );
+}
+```
+
+## Benefits
+
+- **Type-safe data updates**: `setStageData` ensures data consistency
+- **Reactive UI**: Changes are immediately reflected in components
+- **Validation integration**: Error states update without transitions
+- **Performance optimized**: No unnecessary re-renders or transitions
+- **Developer experience**: Clean, predictable data flow
 
 ## Live Example
 
@@ -165,42 +260,7 @@ function MultiStepForm() {
   }
 
   function DebugInfo() {
-    const { currentStage, data, send } = useStageFlow();
-    const [editStage, setEditStage] = React.useState(currentStage);
-    const [editData, setEditData] = React.useState(JSON.stringify(data, null, 2));
-    const [isEditing, setIsEditing] = React.useState(false);
-
-    // Update edit state when actual state changes
-    React.useEffect(() => {
-      if (!isEditing) {
-        setEditStage(currentStage);
-        setEditData(JSON.stringify(data, null, 2));
-      }
-    }, [currentStage, data, isEditing]);
-
-    const handleStageChange = React.useCallback(e => {
-      setEditStage(e.target.value);
-    }, []);
-
-    const handleDataChange = React.useCallback(e => {
-      setEditData(e.target.value);
-    }, []);
-
-    const handleApplyChanges = React.useCallback(() => {
-      try {
-        const parsedData = JSON.parse(editData);
-        send("updateData", parsedData);
-        setIsEditing(false);
-      } catch (error) {
-        alert("Invalid JSON data");
-      }
-    }, [editData, send]);
-
-    const handleReset = React.useCallback(() => {
-      setEditStage(currentStage);
-      setEditData(JSON.stringify(data, null, 2));
-      setIsEditing(false);
-    }, [currentStage, data]);
+    const { currentStage, data } = useStageFlow();
 
     return (
       <div
@@ -214,135 +274,46 @@ function MultiStepForm() {
           width: "100%",
         }}
       >
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+        <div style={{ marginBottom: "10px" }}>
           <h4 style={{ margin: "0", color: "#495057" }}>Debug Info:</h4>
-          <button
-            onClick={() => setIsEditing(!isEditing)}
-            style={{
-              padding: "5px 10px",
-              backgroundColor: isEditing ? "#dc3545" : "#007bff",
-              color: "white",
-              border: "none",
-              borderRadius: "3px",
-              fontSize: "12px",
-              cursor: "pointer",
-            }}
-          >
-            {isEditing ? "Cancel" : "Edit"}
-          </button>
         </div>
 
-        {isEditing ? (
-          <div>
-            <div style={{ marginBottom: "10px" }}>
-              <label style={{ display: "block", fontSize: "12px", color: "#495057", marginBottom: "5px" }}>
-                <strong>Current Stage:</strong>
-              </label>
-              <select
-                value={editStage}
-                onChange={handleStageChange}
-                style={{
-                  padding: "5px",
-                  fontSize: "12px",
-                  border: "1px solid #ddd",
-                  borderRadius: "3px",
-                  width: "100%",
-                }}
-              >
-                <option value="personal">personal</option>
-                <option value="contact">contact</option>
-                <option value="preferences">preferences</option>
-                <option value="confirmation">confirmation</option>
-                <option value="complete">complete</option>
-              </select>
-            </div>
-
-            <div style={{ marginBottom: "10px" }}>
-              <label style={{ display: "block", fontSize: "12px", color: "#495057", marginBottom: "5px" }}>
-                <strong>Current Data (JSON):</strong>
-              </label>
-              <textarea
-                value={editData}
-                onChange={handleDataChange}
-                style={{
-                  padding: "5px",
-                  fontSize: "12px",
-                  border: "1px solid #ddd",
-                  borderRadius: "3px",
-                  width: "100%",
-                  height: "100px",
-                  fontFamily: "monospace",
-                }}
-              />
-            </div>
-
-            <div style={{ display: "flex", gap: "10px" }}>
-              <button
-                onClick={handleApplyChanges}
-                style={{
-                  padding: "5px 10px",
-                  backgroundColor: "#28a745",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "3px",
-                  fontSize: "12px",
-                  cursor: "pointer",
-                }}
-              >
-                Apply
-              </button>
-              <button
-                onClick={handleReset}
-                style={{
-                  padding: "5px 10px",
-                  backgroundColor: "#6c757d",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "3px",
-                  fontSize: "12px",
-                  cursor: "pointer",
-                }}
-              >
-                Reset
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div>
-            <p style={{ margin: "5px 0", fontSize: "12px", color: "#6c757d" }}>
-              <strong>Current Stage:</strong> {currentStage}
-            </p>
-            <p style={{ margin: "5px 0", fontSize: "12px", color: "#6c757d" }}>
-              <strong>Stage Components:</strong> personal, contact, preferences, confirmation, complete
-            </p>
-            <p style={{ margin: "5px 0", fontSize: "12px", color: "#6c757d" }}>
-              <strong>Current Data:</strong> {JSON.stringify(data)}
-            </p>
-          </div>
-        )}
+        <div>
+          <p style={{ margin: "5px 0", fontSize: "12px", color: "#6c757d" }}>
+            <strong>Current Stage:</strong> {currentStage}
+          </p>
+          <p style={{ margin: "5px 0", fontSize: "12px", color: "#6c757d" }}>
+            <strong>Stage Components:</strong> personal, contact, preferences, confirmation, complete
+          </p>
+          <p style={{ margin: "5px 0", fontSize: "12px", color: "#6c757d" }}>
+            <strong>Current Data:</strong> {JSON.stringify(data)}
+          </p>
+        </div>
       </div>
     );
   }
 
   // Personal stage component
   function PersonalStage({ data, send }) {
+    const { engine } = useStageFlow();
+    
     const handleNameChange = React.useCallback(
       e => {
         const updatedData = { ...(data || {}), name: e.target.value };
-        send("updateData", updatedData);
+        engine.setStageData(updatedData);
       },
-      [data, send]
+      [data, engine]
     );
 
     const handleNext = React.useCallback(() => {
       if (!data?.name || data.name.trim() === "") {
         const dataWithError = { ...(data || {}), errors: { personal: "Name is required" } };
-        send("updateData", dataWithError);
+        engine.setStageData(dataWithError);
         return;
       }
       const updatedData = { ...(data || {}), errors: {} };
       send("next", updatedData);
-    }, [data, send]);
+    }, [data, send, engine]);
 
     return (
       <FormContainer>
@@ -363,36 +334,38 @@ function MultiStepForm() {
 
   // Contact stage component
   function ContactStage({ data, send }) {
+    const { engine } = useStageFlow();
+    
     const handleEmailChange = React.useCallback(
       e => {
         const updatedData = { ...(data || {}), email: e.target.value };
-        send("updateData", updatedData);
+        engine.setStageData(updatedData);
       },
-      [data, send]
+      [data, engine]
     );
 
     const handlePhoneChange = React.useCallback(
       e => {
         const updatedData = { ...(data || {}), phone: e.target.value };
-        send("updateData", updatedData);
+        engine.setStageData(updatedData);
       },
-      [data, send]
+      [data, engine]
     );
 
     const handleNext = React.useCallback(() => {
       if (!data?.email || data.email.trim() === "") {
         const dataWithError = { ...(data || {}), errors: { contact: "Email is required" } };
-        send("updateData", dataWithError);
+        engine.setStageData(dataWithError);
         return;
       }
       if (!data.email.includes("@")) {
         const dataWithError = { ...(data || {}), errors: { contact: "Invalid email format" } };
-        send("updateData", dataWithError);
+        engine.setStageData(dataWithError);
         return;
       }
       const updatedData = { ...(data || {}), errors: {} };
       send("next", updatedData);
-    }, [data, send]);
+    }, [data, send, engine]);
 
     const handleBack = React.useCallback(() => {
       send("back", data || {});
@@ -421,14 +394,16 @@ function MultiStepForm() {
 
   // Preferences stage component
   function PreferencesStage({ data, send }) {
+    const { engine } = useStageFlow();
+    
     const handlePreferenceChange = React.useCallback(
       (pref, checked) => {
         const prefs = data?.preferences || [];
         const updatedPrefs = checked ? [...prefs, pref] : prefs.filter(p => p !== pref);
         const updatedData = { ...(data || {}), preferences: updatedPrefs };
-        send("updateData", updatedData);
+        engine.setStageData(updatedData);
       },
-      [data, send]
+      [data, engine]
     );
 
     const handleNext = React.useCallback(() => {
@@ -567,7 +542,6 @@ function MultiStepForm() {
         name: "personal",
         transitions: [
           { target: "contact", event: "next" },
-          { target: "personal", event: "updateData" },
         ],
       },
       {
@@ -575,7 +549,6 @@ function MultiStepForm() {
         transitions: [
           { target: "preferences", event: "next" },
           { target: "personal", event: "back" },
-          { target: "contact", event: "updateData" },
         ],
       },
       {
@@ -583,7 +556,6 @@ function MultiStepForm() {
         transitions: [
           { target: "confirmation", event: "next" },
           { target: "contact", event: "back" },
-          { target: "preferences", event: "updateData" },
         ],
       },
       {
@@ -591,7 +563,6 @@ function MultiStepForm() {
         transitions: [
           { target: "complete", event: "next" },
           { target: "preferences", event: "back" },
-          { target: "confirmation", event: "updateData" },
         ],
       },
       {
@@ -606,7 +577,6 @@ function MultiStepForm() {
     <StageFlowProvider engine={engine}>
       <DebugInfo />
       <StageRenderer
-        currentStage="personal"
         stageComponents={{
           personal: PersonalStage,
           contact: ContactStage,
@@ -614,80 +584,7 @@ function MultiStepForm() {
           confirmation: ConfirmationStage,
           complete: CompleteStage,
         }}
-        data={{ name: "", email: "", phone: "", preferences: [], errors: {} }}
-        send={(event, data) => {
-          if (event === "next") {
-            engine.send("next", data);
-          } else if (event === "back") {
-            engine.send("back", data);
-          } else if (event === "updateData") {
-            engine.send("updateData", data);
-          } else if (event === "restart") {
-            engine.send("restart", data);
-          }
-        }}
       />
     </StageFlowProvider>
   );
 }
-```
-
-## Debug Interface Techniques
-
-The debug interface demonstrates several advanced React and Stage Flow techniques:
-
-### 1. **Real-time State Monitoring**
-
-- Uses `useStageFlow()` hook to access current stage and data
-- Automatically updates when engine state changes
-- Provides live feedback of form state without manual refresh
-
-### 2. **Conditional State Synchronization**
-
-```jsx
-React.useEffect(() => {
-  if (!isEditing) {
-    setEditStage(currentStage);
-    setEditData(JSON.stringify(data, null, 2));
-  }
-}, [currentStage, data, isEditing]);
-```
-
-- Only updates local state when not in editing mode
-- Prevents user input from being overwritten during editing
-- Maintains data consistency between debug panel and actual form state
-
-### 3. **Interactive State Manipulation**
-
-- **Stage Selection**: Dropdown to change current stage programmatically
-- **Data Editing**: JSON textarea for direct data manipulation
-- **Apply/Reset**: Buttons to apply changes or revert to current state
-- **Error Handling**: JSON validation with user feedback
-
-### 4. **Dual Mode Interface**
-
-- **View Mode**: Read-only display of current state
-- **Edit Mode**: Interactive controls for state manipulation
-- **Toggle Control**: Single button to switch between modes
-
-### 5. **State Management Patterns**
-
-- **Controlled Components**: Form inputs bound to React state
-- **Callback Optimization**: `useCallback` for event handlers
-- **Error Boundaries**: Try-catch for JSON parsing validation
-- **State Isolation**: Local edit state separate from global engine state
-
-### 6. **Developer Experience Features**
-
-- **Visual Feedback**: Color-coded buttons and status indicators
-- **Data Formatting**: Pretty-printed JSON for readability
-- **Responsive Design**: Consistent styling with main form
-- **Accessibility**: Proper labels and semantic HTML structure
-
-This debug interface serves as a powerful development tool, allowing developers to:
-
-- Monitor form state in real-time
-- Test different data scenarios quickly
-- Debug state transitions and data flow
-- Validate form behavior with various inputs
-- Understand the relationship between UI actions and state changes

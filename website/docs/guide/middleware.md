@@ -576,5 +576,5 @@ function createMonolithicMiddleware(): Middleware {
 
 ## Next Steps
 
-- [Effects System](/guide/effects-system) - Handle side effects
-- [Testing](/guide/testing) - Test your stage machines 
+
+- [Testing](/docs/guide/testing) - Test your stage machines 

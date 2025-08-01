@@ -26,7 +26,7 @@ npm install --save-dev @stage-flow/testing
 
 ```tsx
 import { StageFlowEngine } from '@stage-flow/core';
-import { StageFlowProvider, useStageFlow } from '@stage-flow/react';
+import { StageFlowProvider, StageRenderer } from '@stage-flow/react';
 
 // Define your stage and data types
 type AppStage = 'loading' | 'form' | 'success' | 'error';
@@ -62,64 +62,66 @@ const config = {
 const engine = new StageFlowEngine<AppStage, AppData>(config);
 ```
 
-### 2. Wrap Your App with Provider
+### 2. Create Stage Components
+
+```tsx
+// Individual stage components
+function LoadingComponent({ data, send }) {
+  return <div>Loading...</div>;
+}
+
+function FormComponent({ data, send }) {
+  const handleSubmit = (email: string) => {
+    send('submit', { email });
+  };
+  
+  return (
+    <form onSubmit={(e) => {
+      e.preventDefault();
+      handleSubmit('user@example.com');
+    }}>
+      <input type="email" placeholder="Email" />
+      <button type="submit">Submit</button>
+    </form>
+  );
+}
+
+function SuccessComponent({ data, send }) {
+  return (
+    <div>
+      <h2>Success!</h2>
+      <p>Email: {data?.email}</p>
+      <button onClick={() => send('reset')}>Reset</button>
+    </div>
+  );
+}
+
+function ErrorComponent({ data, send }) {
+  return (
+    <div>
+      <h2>Error</h2>
+      <p>{data?.error}</p>
+      <button onClick={() => send('retry')}>Retry</button>
+    </div>
+  );
+}
+```
+
+### 3. Wrap Your App with Provider and Use StageRenderer
 
 ```tsx
 function App() {
   return (
     <StageFlowProvider engine={engine}>
-      <FormComponent />
+      <StageRenderer
+        stageComponents={{
+          loading: LoadingComponent,
+          form: FormComponent,
+          success: SuccessComponent,
+          error: ErrorComponent
+        }}
+      />
     </StageFlowProvider>
-  );
-}
-```
-
-### 3. Use the Hook in Components
-
-```tsx
-function FormComponent() {
-  const { currentStage, send, data } = useStageFlow<AppStage, AppData>();
-  
-  const handleSubmit = (email: string) => {
-    send('submit', { email });
-  };
-  
-  const handleError = (error: string) => {
-    send('fail', { error });
-  };
-  
-  return (
-    <div>
-      {currentStage === 'loading' && (
-        <div>Loading...</div>
-      )}
-      
-      {currentStage === 'form' && (
-        <form onSubmit={(e) => {
-          e.preventDefault();
-          handleSubmit('user@example.com');
-        }}>
-          <input type="email" placeholder="Email" />
-          <button type="submit">Submit</button>
-        </form>
-      )}
-      
-      {currentStage === 'success' && (
-        <div>
-          <h2>Success!</h2>
-          <p>Email: {data?.email}</p>
-          <button onClick={() => send('reset')}>Reset</button>
-        </div>
-      )}
-      
-      {currentStage === 'error' && (
-        <div>
-          <h2>Error</h2>
-          <p>{data?.error}</p>
-          <button onClick={() => send('retry')}>Retry</button>
-        </div>
-      )}
-    </div>
   );
 }
 ```
@@ -177,56 +179,72 @@ const loginConfig: StageFlowConfig<LoginStage, LoginData> = {
 };
 ```
 
-### 3. Use with Full Type Safety
+### 3. Create Type-Safe Stage Components
 
 ```tsx
-function LoginForm() {
-  const { currentStage, send, data } = useStageFlow<LoginStage, LoginData>();
-  
-  // TypeScript will ensure type safety
+import { StageProps } from '@stage-flow/react';
+
+function IdleComponent({ data, send }: StageProps<LoginStage, LoginData>) {
   const handleLogin = (email: string, password: string) => {
     send('login', { email, password });
   };
   
-  const handleSuccess = (user: LoginData['user']) => {
-    send('success', { user });
-  };
-  
-  const handleError = (error: string) => {
-    send('fail', { error });
-  };
-  
+  return (
+    <form onSubmit={(e) => {
+      e.preventDefault();
+      const formData = new FormData(e.currentTarget);
+      handleLogin(
+        formData.get('email') as string,
+        formData.get('password') as string
+      );
+    }}>
+      <input name="email" type="email" placeholder="Email" />
+      <input name="password" type="password" placeholder="Password" />
+      <button type="submit">Login</button>
+    </form>
+  );
+}
+
+function LoadingComponent({ data, send }: StageProps<LoginStage, LoginData>) {
+  return <div>Logging in...</div>;
+}
+
+function SuccessComponent({ data, send }: StageProps<LoginStage, LoginData>) {
   return (
     <div>
-      {currentStage === 'idle' && (
-        <form onSubmit={(e) => {
-          e.preventDefault();
-          handleLogin('user@example.com', 'password');
-        }}>
-          <input type="email" placeholder="Email" />
-          <input type="password" placeholder="Password" />
-          <button type="submit">Login</button>
-        </form>
-      )}
-      
-      {currentStage === 'loading' && (
-        <div>Logging in...</div>
-      )}
-      
-      {currentStage === 'success' && data?.user && (
-        <div>
-          <h2>Welcome, {data.user.name}!</h2>
-          <button onClick={() => send('reset')}>Logout</button>
-        </div>
-      )}
-      
-      {currentStage === 'error' && (
-        <div>
-          <p>Error: {data?.error}</p>
-          <button onClick={() => send('reset')}>Try Again</button>
-        </div>
-      )}
+      <h2>Welcome, {data?.user?.name}!</h2>
+      <button onClick={() => send('reset')}>Logout</button>
     </div>
+  );
+}
+
+function ErrorComponent({ data, send }: StageProps<LoginStage, LoginData>) {
+  return (
+    <div>
+      <p>Error: {data?.error}</p>
+      <button onClick={() => send('reset')}>Try Again</button>
+    </div>
+  );
+}
+```
+
+### 4. Use with Full Type Safety
+
+```tsx
+function LoginApp() {
+  const engine = new StageFlowEngine<LoginStage, LoginData>(loginConfig);
+  
+  return (
+    <StageFlowProvider engine={engine}>
+      <StageRenderer
+        stageComponents={{
+          idle: IdleComponent,
+          loading: LoadingComponent,
+          success: SuccessComponent,
+          error: ErrorComponent
+        }}
+      />
+    </StageFlowProvider>
   );
 }
 ```
@@ -320,15 +338,17 @@ src/
 │   ├── auth/
 │   │   ├── auth.config.ts
 │   │   ├── auth.types.ts
+│   │   ├── auth.components.tsx
 │   │   └── auth.effects.ts
 │   ├── checkout/
 │   │   ├── checkout.config.ts
 │   │   ├── checkout.types.ts
+│   │   ├── checkout.components.tsx
 │   │   └── checkout.effects.ts
 │   └── index.ts
 ├── components/
-│   ├── AuthForm.tsx
-│   ├── CheckoutForm.tsx
+│   ├── AuthApp.tsx
+│   ├── CheckoutApp.tsx
 │   └── StageRenderer.tsx
 ├── hooks/
 │   ├── useAuth.ts
@@ -391,23 +411,88 @@ export const authConfig: StageFlowConfig<AuthStage, AuthData> = {
 };
 ```
 
-**`src/hooks/useAuth.ts`**
+**`src/stages/auth/auth.components.tsx`**
 ```tsx
-import { useStageFlow } from '@stage-flow/react';
-import { AuthStage, AuthData } from '../stages/auth/auth.types';
+import { StageProps } from '@stage-flow/react';
+import { AuthStage, AuthData } from './auth.types';
 
-export function useAuth() {
-  return useStageFlow<AuthStage, AuthData>();
+export function IdleComponent({ data, send }: StageProps<AuthStage, AuthData>) {
+  return (
+    <form onSubmit={(e) => {
+      e.preventDefault();
+      const formData = new FormData(e.currentTarget);
+      send('login', {
+        email: formData.get('email') as string,
+        password: formData.get('password') as string
+      });
+    }}>
+      <input name="email" type="email" placeholder="Email" />
+      <input name="password" type="password" placeholder="Password" />
+      <button type="submit">Login</button>
+    </form>
+  );
+}
+
+export function LoadingComponent({ data, send }: StageProps<AuthStage, AuthData>) {
+  return <div>Logging in...</div>;
+}
+
+export function SuccessComponent({ data, send }: StageProps<AuthStage, AuthData>) {
+  return (
+    <div>
+      <h2>Welcome, {data?.user?.name}!</h2>
+      <button onClick={() => send('reset')}>Logout</button>
+    </div>
+  );
+}
+
+export function ErrorComponent({ data, send }: StageProps<AuthStage, AuthData>) {
+  return (
+    <div>
+      <p>Error: {data?.error}</p>
+      <button onClick={() => send('reset')}>Try Again</button>
+    </div>
+  );
+}
+```
+
+**`src/components/AuthApp.tsx`**
+```tsx
+import { StageFlowEngine } from '@stage-flow/core';
+import { StageFlowProvider, StageRenderer } from '@stage-flow/react';
+import { authConfig } from '../stages/auth/auth.config';
+import { 
+  IdleComponent, 
+  LoadingComponent, 
+  SuccessComponent, 
+  ErrorComponent 
+} from '../stages/auth/auth.components';
+
+export function AuthApp() {
+  const engine = new StageFlowEngine(authConfig);
+  
+  return (
+    <StageFlowProvider engine={engine}>
+      <StageRenderer
+        stageComponents={{
+          idle: IdleComponent,
+          loading: LoadingComponent,
+          success: SuccessComponent,
+          error: ErrorComponent
+        }}
+      />
+    </StageFlowProvider>
+  );
 }
 ```
 
 ## Next Steps
 
-- [Core Concepts](/guide/core-concepts) - Learn the fundamental concepts
-- [Basic Usage](/guide/basic-usage) - See basic usage patterns
-- [TypeScript Usage](/guide/typescript-usage) - Advanced TypeScript features
-- [React Integration](/react/index) - React-specific features
-- [Plugin System](/guide/plugin-system) - Extend functionality with plugins
-- [Middleware](/guide/middleware) - Add processing layers
-- [Effects System](/guide/effects-system) - Handle side effects
-- [Testing](/guide/testing) - Test your stage machines 
+- [Core Concepts](/docs/guide/core-concepts) - Learn the fundamental concepts
+- [Basic Usage](/docs/guide/basic-usage) - See basic usage patterns
+- [TypeScript Usage](/docs/guide/typescript-usage) - Advanced TypeScript features
+- [React Integration](/docs/react/index) - React-specific features
+- [Plugin System](/docs/guide/plugin-system) - Extend functionality with plugins
+- [Middleware](/docs/guide/middleware) - Add processing layers
+
+- [Testing](/docs/guide/testing) - Test your stage machines 

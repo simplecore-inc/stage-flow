@@ -479,7 +479,7 @@ function UncomputedComponent() {
 
 ## Related Guides
 
-- **[Getting Started](/guide/getting-started)** - Set up your first Stage Flow project
-- **[Core Concepts](/guide/core-concepts)** - Learn the fundamental concepts
-- **[Basic Usage](/guide/basic-usage)** - See basic usage patterns
-- **[TypeScript Usage](/guide/typescript-usage)** - Advanced TypeScript features 
+- **[Getting Started](/docs/guide/getting-started)** - Set up your first Stage Flow project
+- **[Core Concepts](/docs/guide/core-concepts)** - Learn the fundamental concepts
+- **[Basic Usage](/docs/guide/basic-usage)** - See basic usage patterns
+- **[TypeScript Usage](/docs/guide/typescript-usage)** - Advanced TypeScript features 

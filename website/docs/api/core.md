@@ -27,6 +27,7 @@ class StageFlowEngine<TStage extends string, TData = unknown> {
   // Event Handling
   send(event: string, data?: TData): Promise<void>;
   goTo(stage: TStage, data?: TData): Promise<void>;
+  setStageData(data: TData): void;
   
   // Subscription
   subscribe(callback: (stage: TStage, data?: TData) => void): () => void;
@@ -492,6 +493,13 @@ await engine.send('reset');
 await engine.goTo('error', { error: 'Something went wrong' });
 await engine.goTo('success', { username: 'john' });
 
+// Update data without stage transition
+engine.setStageData({ 
+  ...engine.getCurrentData(), 
+  name: 'John Doe',
+  email: 'john@example.com' 
+});
+
 // Clean up subscription
 unsubscribe();
 ```
@@ -581,4 +589,75 @@ setInterval(() => {
   const paused = engine.areTimersPaused();
   console.log(`Timer: ${remaining}ms remaining, Paused: ${paused}`);
 }, 100);
-``` 
+```
+
+## Method Details
+
+### send(event, data?)
+
+Sends an event to trigger a stage transition.
+
+**Parameters:**
+- `event` (string): The event name to send
+- `data?` (TData): Optional data to associate with the transition
+
+**Returns:** void
+
+**Throws:** TransitionError when the engine is not started or a transition is in progress
+
+**Example:**
+```tsx
+await engine.send('submit', { formData: { name: 'John' } });
+```
+
+### goTo(stage, data?)
+
+Directly navigates to a specific stage.
+
+**Parameters:**
+- `stage` (TStage): The target stage to navigate to
+- `data?` (TData): Optional data to associate with the transition
+
+**Returns:** Promise&lt;void&gt;
+
+**Throws:** TransitionError when the engine is not started, a transition is in progress, or no valid transition path exists
+
+**Example:**
+```tsx
+await engine.goTo('error', { message: 'Something went wrong' });
+```
+
+### setStageData(data)
+
+Updates the current stage data without triggering a stage transition.
+
+This method allows you to update the data associated with the current stage without changing stages or triggering any transition logic. It's useful for updating form data, user input, or other state that doesn't require a stage change.
+
+**Parameters:**
+- `data` (TData): The new data to set for the current stage
+
+**Returns:** void
+
+**Throws:** TransitionError when the engine is not started or a transition is in progress
+
+**Example:**
+```tsx
+// Update form data without changing stages
+engine.setStageData({ 
+  ...engine.getCurrentData(), 
+  name: 'John Doe',
+  email: 'john@example.com' 
+});
+
+// Update validation errors
+engine.setStageData({ 
+  ...engine.getCurrentData(), 
+  errors: { email: 'Invalid email format' } 
+});
+```
+
+**Key Benefits:**
+- **Performance**: No unnecessary stage transitions for data updates
+- **Reactive UI**: Changes are immediately reflected in components
+- **Validation integration**: Error states can be updated instantly
+- **Type safety**: Ensures data consistency with current stage

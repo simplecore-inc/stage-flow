@@ -80,88 +80,6 @@ function App() {
 }
 ```
 
-## Redux Integration
-
-Integrate Stage Flow with Redux for centralized state management:
-
-```tsx
-import { Provider as ReduxProvider, useSelector, useDispatch } from 'react-redux';
-import { configureStore, createSlice } from '@reduxjs/toolkit';
-
-// Redux slice for stage machine
-const stageSlice = createSlice({
-  name: 'stage',
-  initialState: {
-    currentStage: 'idle',
-    data: {}
-  },
-  reducers: {
-    setStage: (state, action) => {
-      state.currentStage = action.payload.stage;
-      state.data = action.payload.data;
-    }
-  }
-});
-
-const store = configureStore({
-  reducer: {
-    stage: stageSlice.reducer
-  }
-});
-
-// Custom hook to sync Redux with Stage Flow
-function useStageReduxSync() {
-  const dispatch = useDispatch();
-  const { currentStage, data } = useStageFlow<AppStage, AppData>();
-  
-  useEffect(() => {
-    dispatch(stageSlice.actions.setStage({
-      stage: currentStage,
-      data
-    }));
-  }, [currentStage, data, dispatch]);
-  
-  return { currentStage, data };
-}
-
-// Redux configuration
-const reduxConfig = {
-  initial: 'idle',
-  stages: [
-    {
-      name: 'idle',
-      transitions: [{ target: 'loading', event: 'start' }]
-    },
-    {
-      name: 'loading',
-      transitions: [
-        { target: 'success', event: 'complete' },
-        { target: 'error', event: 'fail' }
-      ]
-    },
-    {
-      name: 'success',
-      transitions: [{ target: 'idle', event: 'reset' }]
-    },
-    {
-      name: 'error',
-      transitions: [{ target: 'idle', event: 'retry' }]
-    }
-  ]
-};
-
-const reduxEngine = new StageFlowEngine(reduxConfig);
-
-function App() {
-  return (
-    <ReduxProvider store={store}>
-      <StageFlowProvider engine={reduxEngine}>
-        <YourApp />
-      </StageFlowProvider>
-    </ReduxProvider>
-  );
-}
-```
 
 ## Zustand Integration
 
@@ -590,7 +508,7 @@ test('stage transitions work correctly', async () => {
 
 ## Related Guides
 
-- **[Getting Started](/guide/getting-started)** - Set up your first Stage Flow project
-- **[Core Concepts](/guide/core-concepts)** - Learn the fundamental concepts
-- **[Basic Usage](/guide/basic-usage)** - See basic usage patterns
-- **[TypeScript Usage](/guide/typescript-usage)** - Advanced TypeScript features 
+- **[Getting Started](/docs/guide/getting-started)** - Set up your first Stage Flow project
+- **[Core Concepts](/docs/guide/core-concepts)** - Learn the fundamental concepts
+- **[Basic Usage](/docs/guide/basic-usage)** - See basic usage patterns
+- **[TypeScript Usage](/docs/guide/typescript-usage)** - Advanced TypeScript features 

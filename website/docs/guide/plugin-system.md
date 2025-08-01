@@ -712,6 +712,6 @@ class DirtyPlugin implements Plugin {
 
 ## Next Steps
 
-- [Middleware](/guide/middleware) - Add processing layers
-- [Effects System](/guide/effects-system) - Handle side effects
-- [Testing](/guide/testing) - Test your stage machines 
+- [Middleware](/docs/guide/middleware) - Add processing layers
+
+- [Testing](/docs/guide/testing) - Test your stage machines 

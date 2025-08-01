@@ -18,6 +18,8 @@ export interface UseStageFlowReturn<TStage extends string, TData = unknown> {
   send: (event: string, data?: TData) => Promise<void>;
   /** Navigate directly to a stage */
   goTo: (stage: TStage, data?: TData) => Promise<void>;
+  /** Update stage data without triggering transitions */
+  setStageData: (data: TData) => void;
   /** Whether a transition is currently in progress */
   isTransitioning: boolean;
   /** Pause all timers for the current stage */
@@ -30,6 +32,8 @@ export interface UseStageFlowReturn<TStage extends string, TData = unknown> {
   getTimerRemainingTime: () => number;
   /** Check if timers are paused for the current stage */
   areTimersPaused: () => boolean;
+  /** The underlying StageFlowEngine instance */
+  engine: StageFlowEngine<TStage, TData>;
 }
 
 /**
@@ -118,11 +122,13 @@ export function useStageFlow<TStage extends string, TData = unknown>(
     data,
     send,
     goTo,
+    setStageData: (data: TData) => actualEngine.setStageData(data),
     isTransitioning,
     pauseTimers: () => actualEngine.pauseTimers(),
     resumeTimers: () => actualEngine.resumeTimers(),
     resetTimers: () => actualEngine.resetTimers(),
     getTimerRemainingTime: () => actualEngine.getTimerRemainingTime(),
-    areTimersPaused: () => actualEngine.areTimersPaused()
+    areTimersPaused: () => actualEngine.areTimersPaused(),
+    engine: actualEngine
   };
 }

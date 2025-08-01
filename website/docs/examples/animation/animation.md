@@ -60,20 +60,16 @@ function AnimationWithStageFlow() {
     };
 
     return (
-      <div 
-        style={containerStyle} 
-        onMouseEnter={onMouseEnter}
-        onMouseLeave={onMouseLeave}
-      >
+      <div style={containerStyle} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
         {children}
         {onResetTimer && (
-          <button 
+          <button
             onClick={onResetTimer}
             style={resetButtonStyle}
-            onMouseEnter={(e) => {
+            onMouseEnter={e => {
               e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.3)";
             }}
-            onMouseLeave={(e) => {
+            onMouseLeave={e => {
               e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.2)";
             }}
           >
@@ -188,29 +184,10 @@ function AnimationWithStageFlow() {
     );
   }
 
-
-
   // Loading stage component
   function LoadingStage({ stage, data, send, goTo, isTransitioning }) {
-    const [elapsedTime, setElapsedTime] = React.useState(0);
-    const startTime = React.useRef(Date.now());
-
-    React.useEffect(() => {
-      // Auto-transition from loading to page1 after 3 seconds
-      const timer = setTimeout(() => {
-        send("loaded");
-      }, 3000);
-
-      // Update elapsed time every 100ms
-      const interval = setInterval(() => {
-        setElapsedTime(Date.now() - startTime.current);
-      }, 100);
-
-      return () => {
-        clearTimeout(timer);
-        clearInterval(interval);
-      };
-    }, [send]);
+    // Auto-transition from loading to page1 after 3 seconds
+    // This is handled by the engine's built-in timer system
 
     return (
       <PageContainer backgroundColor="#f8f9fa" color="#333">
@@ -226,103 +203,20 @@ function AnimationWithStageFlow() {
         />
         <p style={{ marginTop: "20px", fontSize: "18px" }}>Loading...</p>
         <p style={{ fontSize: "14px", color: "#666" }}>Initializing animation system...</p>
-        <p style={{ fontSize: "12px", color: "#999", marginTop: "10px" }}>
-          Elapsed: {elapsedTime}ms
-        </p>
+        <p style={{ fontSize: "12px", color: "#999", marginTop: "10px" }}>Initializing...</p>
       </PageContainer>
     );
   }
 
-  // Red page stage component
-  function RedPageStage({ stage, data, send, goTo, isTransitioning, remainingTime, isPaused, onMouseEnter, onMouseLeave, onResetTimer }) {
+  // Unified page stage component
+  function PageStage({ stage, data, send, goTo, isTransitioning, page, remainingTime, isPaused, onMouseEnter, onMouseLeave, onResetTimer }) {
     return (
-      <PageContainer 
-        backgroundColor="#dc3545"
-        onMouseEnter={onMouseEnter}
-        onMouseLeave={onMouseLeave}
-        onResetTimer={onResetTimer}
-      >
-        <PageTitle>Red Page</PageTitle>
+      <PageContainer backgroundColor={page.color} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} onResetTimer={onResetTimer}>
+        <PageTitle>{page.name}</PageTitle>
         <PageDescription>
-          This page demonstrates the <strong>slideRight</strong> effect.
+          This page demonstrates the <strong>{page.effect}</strong> effect.
         </PageDescription>
-        <EffectInfo effect="slideRight" color="#dc3545" />
-        <TimerDisplay remainingTime={remainingTime} isPaused={isPaused} />
-      </PageContainer>
-    );
-  }
-
-  // Blue page stage component
-  function BluePageStage({ stage, data, send, goTo, isTransitioning, remainingTime, isPaused, onMouseEnter, onMouseLeave, onResetTimer }) {
-    return (
-      <PageContainer 
-        backgroundColor="#007bff"
-        onMouseEnter={onMouseEnter}
-        onMouseLeave={onMouseLeave}
-        onResetTimer={onResetTimer}
-      >
-        <PageTitle>Blue Page</PageTitle>
-        <PageDescription>
-          This page demonstrates the <strong>slideLeft</strong> effect.
-        </PageDescription>
-        <EffectInfo effect="slideLeft" color="#007bff" />
-        <TimerDisplay remainingTime={remainingTime} isPaused={isPaused} />
-      </PageContainer>
-    );
-  }
-
-  // Green page stage component
-  function GreenPageStage({ stage, data, send, goTo, isTransitioning, remainingTime, isPaused, onMouseEnter, onMouseLeave, onResetTimer }) {
-    return (
-      <PageContainer 
-        backgroundColor="#28a745"
-        onMouseEnter={onMouseEnter}
-        onMouseLeave={onMouseLeave}
-        onResetTimer={onResetTimer}
-      >
-        <PageTitle>Green Page</PageTitle>
-        <PageDescription>
-          This page demonstrates the <strong>scaleUp</strong> effect.
-        </PageDescription>
-        <EffectInfo effect="scaleUp" color="#28a745" />
-        <TimerDisplay remainingTime={remainingTime} isPaused={isPaused} />
-      </PageContainer>
-    );
-  }
-
-  // Purple page stage component
-  function PurplePageStage({ stage, data, send, goTo, isTransitioning, remainingTime, isPaused, onMouseEnter, onMouseLeave, onResetTimer }) {
-    return (
-      <PageContainer 
-        backgroundColor="#6f42c1"
-        onMouseEnter={onMouseEnter}
-        onMouseLeave={onMouseLeave}
-        onResetTimer={onResetTimer}
-      >
-        <PageTitle>Purple Page</PageTitle>
-        <PageDescription>
-          This page demonstrates the <strong>rotate</strong> effect.
-        </PageDescription>
-        <EffectInfo effect="rotate" color="#6f42c1" />
-        <TimerDisplay remainingTime={remainingTime} isPaused={isPaused} />
-      </PageContainer>
-    );
-  }
-
-  // Orange page stage component
-  function OrangePageStage({ stage, data, send, goTo, isTransitioning, remainingTime, isPaused, onMouseEnter, onMouseLeave, onResetTimer }) {
-    return (
-      <PageContainer 
-        backgroundColor="#fd7e14"
-        onMouseEnter={onMouseEnter}
-        onMouseLeave={onMouseLeave}
-        onResetTimer={onResetTimer}
-      >
-        <PageTitle>Orange Page</PageTitle>
-        <PageDescription>
-          This page demonstrates the <strong>zoom</strong> effect.
-        </PageDescription>
-        <EffectInfo effect="zoom" color="#fd7e14" />
+        <EffectInfo effect={page.effect} color={page.color} />
         <TimerDisplay remainingTime={remainingTime} isPaused={isPaused} />
       </PageContainer>
     );
@@ -334,14 +228,29 @@ function AnimationWithStageFlow() {
     stages: [
       {
         name: "loading",
-        transitions: [{ target: "page1", event: "loaded"}], // Handle timer directly within the step to trigger transition
+        transitions: [{ target: "page1", event: "loaded" }],
         effect: "fade",
+        onEnter: context => {
+          // Auto-transition after 3 seconds
+          const transitionTimer = setTimeout(() => {
+            context.send("loaded");
+          }, 3000);
+
+          // Store timer reference in context data
+          context.data = { ...context.data, transitionTimer };
+        },
+        onExit: context => {
+          // Clean up timer
+          if (context.data?.transitionTimer) {
+            clearTimeout(context.data.transitionTimer);
+          }
+        },
       },
       {
         name: "page1",
         transitions: [
           { target: "page2", event: "next", after: 5000 },
-          { target: "page5", event: "previous" },
+          { target: "page1", event: "previous" },
         ],
         effect: "slideRight",
       },
@@ -382,37 +291,27 @@ function AnimationWithStageFlow() {
   engine.start();
 
   // AnimationContent component inside the main function
-  function AnimationContent({ engine }) {
-    const { 
-      currentStage, 
-      data, 
-      send, 
-      goTo,
-      pauseTimers,
-      resumeTimers,
-      resetTimers,
-      getTimerRemainingTime,
-      areTimersPaused
-    } = useStageFlow();
+  function AnimationContent() {
+    const { currentStage, data, send, goTo, pauseTimers, resumeTimers, resetTimers, getTimerRemainingTime, areTimersPaused } = useStageFlow();
 
+    // Get timer information from Stage Flow
     const [remainingTime, setRemainingTime] = React.useState(0);
     const [isPaused, setIsPaused] = React.useState(false);
 
-    // Update timer display from engine
     React.useEffect(() => {
       const interval = setInterval(() => {
-        const remaining = getTimerRemainingTime();
-        const paused = areTimersPaused();
-        setRemainingTime(remaining);
-        setIsPaused(paused);
+        if (getTimerRemainingTime) {
+          setRemainingTime(getTimerRemainingTime());
+        }
+        if (areTimersPaused) {
+          setIsPaused(areTimersPaused());
+        }
       }, 100);
 
       return () => clearInterval(interval);
     }, [getTimerRemainingTime, areTimersPaused, currentStage]);
 
-
-
-    // Page configurations
+    // Page configurations with effects
     const pages = [
       {
         id: "page1",
@@ -456,14 +355,15 @@ function AnimationWithStageFlow() {
       send("previous");
     }, [send]);
 
-    const handlePageSelect = React.useCallback((pageId) => {
-      // Navigate directly to the selected page
-      if (pageId !== currentStage) {
-        goTo(pageId);
-      }
-    }, [currentStage, goTo]);
-
-
+    const handlePageSelect = React.useCallback(
+      pageId => {
+        // Navigate directly to the selected page
+        if (pageId !== currentStage) {
+          goTo(pageId);
+        }
+      },
+      [currentStage, goTo]
+    );
 
     const handleMouseEnter = React.useCallback(() => {
       if (currentStage !== "loading") {
@@ -501,13 +401,15 @@ function AnimationWithStageFlow() {
           </p>
 
           {/* Timer Instructions */}
-          <div style={{ 
-            backgroundColor: "#e3f2fd", 
-            padding: "15px", 
-            borderRadius: "8px", 
-            marginBottom: "20px",
-            textAlign: "center"
-          }}>
+          <div
+            style={{
+              backgroundColor: "#e3f2fd",
+              padding: "15px",
+              borderRadius: "8px",
+              marginBottom: "20px",
+              textAlign: "center",
+            }}
+          >
             <p style={{ margin: "0 0 10px 0", fontSize: "14px", color: "#1976d2" }}>
               <strong>Timer Control:</strong> Hover over the content area to pause timers, move mouse away to resume.
             </p>
@@ -517,24 +419,28 @@ function AnimationWithStageFlow() {
           </div>
 
           {/* Main Content Area */}
-          <div 
-            style={{ position: "relative", minHeight: "400px" }}
-          >
+          <div style={{ position: "relative", minHeight: "400px" }}>
             <StageRenderer
-              engine={engine}
               stageComponents={{
                 loading: LoadingStage,
-                page1: (props) => <RedPageStage {...props} remainingTime={remainingTime} isPaused={isPaused} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} onResetTimer={handleResetTimer} />,
-                page2: (props) => <BluePageStage {...props} remainingTime={remainingTime} isPaused={isPaused} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} onResetTimer={handleResetTimer} />,
-                page3: (props) => <GreenPageStage {...props} remainingTime={remainingTime} isPaused={isPaused} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} onResetTimer={handleResetTimer} />,
-                page4: (props) => <PurplePageStage {...props} remainingTime={remainingTime} isPaused={isPaused} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} onResetTimer={handleResetTimer} />,
-                page5: (props) => <OrangePageStage {...props} remainingTime={remainingTime} isPaused={isPaused} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} onResetTimer={handleResetTimer} />,
+                ...pages.reduce((acc, page) => {
+                  acc[page.id] = props => (
+                    <PageStage
+                      {...props}
+                      page={page}
+                      remainingTime={remainingTime}
+                      isPaused={isPaused}
+                      onMouseEnter={handleMouseEnter}
+                      onMouseLeave={handleMouseLeave}
+                      onResetTimer={handleResetTimer}
+                    />
+                  );
+                  return acc;
+                }, {}),
               }}
               disableAnimations={false}
               style={{ minHeight: "400px" }}
             />
-
-
           </div>
 
           {/* Navigation Controls */}
@@ -556,20 +462,13 @@ function AnimationWithStageFlow() {
 
               <div style={{ display: "flex", gap: "10px" }}>
                 {pages.map(page => (
-                  <PageButton
-                    key={page.id}
-                    onClick={() => handlePageSelect(page.id)}
-                    isActive={currentStage === page.id}
-                    color={page.color}
-                  >
+                  <PageButton key={page.id} onClick={() => handlePageSelect(page.id)} isActive={currentStage === page.id} color={page.color}>
                     {page.name.split(" ")[0]}
                   </PageButton>
                 ))}
               </div>
 
-              <NavigationButton onClick={handleNext}>
-                Next →
-              </NavigationButton>
+              <NavigationButton onClick={handleNext}>Next →</NavigationButton>
             </div>
           )}
         </div>
@@ -579,7 +478,7 @@ function AnimationWithStageFlow() {
 
   return (
     <StageFlowProvider engine={engine}>
-      <AnimationContent engine={engine} />
+      <AnimationContent />
     </StageFlowProvider>
   );
 }
@@ -595,18 +494,18 @@ The animation example uses multiple stages for different animation effects with 
 const engine = new StageFlowEngine({
   initial: "loading",
   stages: [
-    { 
-      name: "loading", 
-      transitions: [{ target: "page1", event: "loaded" }], 
-      effect: "fade" 
+    {
+      name: "loading",
+      transitions: [{ target: "page1", event: "loaded" }],
+      effect: "fade",
     },
-    { 
-      name: "page1", 
+    {
+      name: "page1",
       transitions: [
         { target: "page2", event: "next", after: 5000 },
-        { target: "page5", event: "previous" }
-      ], 
-      effect: "slideRight" 
+        { target: "page5", event: "previous" },
+      ],
+      effect: "slideRight",
     },
     // ... other stages with 5-second auto-advance
   ],
@@ -629,24 +528,7 @@ Each stage demonstrates different animation effects:
 The example includes comprehensive timer control functionality that relies entirely on StageFlowEngine:
 
 ```javascript
-const { 
-  pauseTimers, 
-  resumeTimers, 
-  resetTimers, 
-  getTimerRemainingTime, 
-  areTimersPaused 
-} = useStageFlow();
-
-// Real-time timer display update
-React.useEffect(() => {
-  const interval = setInterval(() => {
-    const remaining = getTimerRemainingTime();
-    const paused = areTimersPaused();
-    setRemainingTime(remaining);
-    setIsPaused(paused);
-  }, 100);
-  return () => clearInterval(interval);
-}, [getTimerRemainingTime, areTimersPaused, currentStage]);
+const { pauseTimers, resumeTimers, resetTimers } = useStageFlow();
 
 // Pause timers on mouse enter
 const handleMouseEnter = React.useCallback(() => {
@@ -670,30 +552,19 @@ const handleResetTimer = React.useCallback(() => {
 }, [currentStage, resetTimers]);
 ```
 
-### Timer Display Component
-
-Real-time timer display showing remaining time and pause status:
-
-```javascript
-function TimerDisplay({ remainingTime, isPaused, style = {} }) {
-  return (
-    <p style={timerStyle}>
-      Stage Timer: {remainingTime}ms {isPaused ? "(Paused)" : ""}
-    </p>
-  );
-}
-```
-
 ### Navigation System
 
 Real-time navigation with multiple controls:
 
 ```javascript
-const handlePageSelect = React.useCallback((pageId) => {
-  if (pageId !== currentStage) {
-    goTo(pageId);
-  }
-}, [currentStage, goTo]);
+const handlePageSelect = React.useCallback(
+  pageId => {
+    if (pageId !== currentStage) {
+      goTo(pageId);
+    }
+  },
+  [currentStage, goTo]
+);
 ```
 
 ## Benefits
@@ -706,14 +577,13 @@ const handlePageSelect = React.useCallback((pageId) => {
 6. **Individual Stage Components**: Each page is a separate component
 7. **Advanced Timer Control**: Pause, resume, and reset functionality for automatic transitions
 8. **Interactive Experience**: Mouse hover controls for timer management
-9. **Real-time Timer Display**: Live remaining time and pause status indication
-10. **Engine Integration**: All timer functionality relies on StageFlowEngine's internal mechanisms
-11. **Reset Button**: Convenient reset functionality positioned in each stage
-12. **Loading Stage Independence**: Self-implemented timer for loading stage
+9. **Engine Integration**: All timer functionality relies on StageFlowEngine's internal mechanisms
+10. **Reset Button**: Convenient reset functionality positioned in each stage
+11. **Loading Stage Independence**: Self-implemented timer for loading stage
 
 ## Related Examples
 
 - **[Setup Wizard](../advanced/setup-wizard.md)** - Multi-step configuration wizard
 - **[Authentication Flow](../advanced/authentication-flow.md)** - Complex login/logout workflows
 - **[Shopping Cart](../advanced/shopping-cart.md)** - Multi-step purchase process
-- **[Basic Examples](../basic/basic)** - Simple stage machine examples
+- **[Basic Examples](/docs/examples/basic/simple-counter)** - Simple stage machine examples

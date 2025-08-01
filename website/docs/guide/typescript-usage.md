@@ -716,8 +716,8 @@ function createStageMachine(config: any): any {
 
 ## Next Steps
 
-- [React Integration](/react/index) - React-specific features
-- [Plugin System](/guide/plugin-system) - Extend functionality with plugins
-- [Middleware](/guide/middleware) - Add processing layers
-- [Effects System](/guide/effects-system) - Handle side effects
-- [Testing](/guide/testing) - Test your stage machines 
+- [React Integration](/docs/react/index) - React-specific features
+- [Plugin System](/docs/guide/plugin-system) - Extend functionality with plugins
+- [Middleware](/docs/guide/middleware) - Add processing layers
+
+- [Testing](/docs/guide/testing) - Test your stage machines 

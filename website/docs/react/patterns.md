@@ -185,7 +185,6 @@ function LoginForm() {
   return (
     <StageFlowProvider engine={engine}>
       <StageRenderer
-        engine={engine}
         stageComponents={{
           unauthenticated: UnauthenticatedView,
           authenticating: AuthenticatingView,
@@ -349,7 +348,6 @@ function App() {
   return (
     <StageFlowProvider engine={engine}>
       <StageRenderer
-        engine={engine}
         stageComponents={{
           idle: IdleView,
           loading: LoadingView,
@@ -610,7 +608,7 @@ function withStage(targetStage, Component) {
       return null;
     }
     
-    return <Component {...props} send={send} data={data} />;
+    return <Component {...props} data={data} />;
   };
 }
 
@@ -859,7 +857,6 @@ function DynamicApp({ features }) {
   return (
     <StageFlowProvider engine={engine}>
       <StageRenderer
-        engine={engine}
         stageComponents={{
           idle: IdleView,
           loading: LoadingView,

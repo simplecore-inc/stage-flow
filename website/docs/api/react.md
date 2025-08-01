@@ -43,6 +43,8 @@ interface UseStageFlowReturn<TStage extends string, TData = unknown> {
   send: (event: string, data?: TData) => Promise<void>;
   /** Navigate directly to a stage */
   goTo: (stage: TStage, data?: TData) => Promise<void>;
+  /** Update stage data without triggering transitions */
+  setStageData: (data: TData) => void;
   /** Whether a transition is currently in progress */
   isTransitioning: boolean;
   /** Pause all timers for the current stage */
@@ -117,8 +119,8 @@ interface StageProps<TStage extends string, TData = unknown> {
 }
 
 interface StageRendererProps<TStage extends string, TData = unknown> {
-  /** The StageFlowEngine instance */
-  engine: StageFlowEngine<TStage, TData>;
+  /** The StageFlowEngine instance (optional if using context) */
+  engine?: StageFlowEngine<TStage, TData>;
   /** Optional effect configurations - overrides stage-specific effects */
   effects?: Record<string, EffectConfig>;
   /** Optional stage component overrides */
@@ -356,7 +358,6 @@ function SuccessView({ stage, data, send, goTo, isTransitioning }) {
 function App() {
   return (
     <StageRenderer
-      engine={engine}
       stageComponents={{
         idle: IdleView,
         loading: LoadingView,

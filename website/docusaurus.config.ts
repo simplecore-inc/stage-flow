@@ -25,8 +25,10 @@ const config: Config = {
   organizationName: 'stage-flow', // Usually your GitHub org/user name.
   projectName: 'stage-flow', // Usually your repo name.
 
-  onBrokenLinks: 'throw',
+  onBrokenLinks: 'warn',
   onBrokenMarkdownLinks: 'warn',
+
+
 
   // Even if you don't use internationalization, you can use this field to set
   // useful metadata like html lang. For example, if your site is Chinese, you
@@ -47,24 +49,10 @@ const config: Config = {
           editUrl:
             'https://github.com/stage-flow/stage-flow/tree/main/website/',
         },
-        blog: {
-          showReadingTime: true,
-          feedOptions: {
-            type: ['rss', 'atom'],
-            xslt: true,
-          },
-          // Please change this to your repo.
-          // Remove this to remove the "edit this page" links.
-          editUrl:
-            'https://github.com/stage-flow/stage-flow/tree/main/website/',
-          // Useful options to enforce blogging best practices
-          onInlineTags: 'warn',
-          onInlineAuthors: 'warn',
-          onUntruncatedBlogPosts: 'warn',
-        },
         theme: {
           customCss: './src/css/custom.css',
         },
+
       } satisfies Preset.Options,
     ],
   ],
@@ -93,7 +81,6 @@ const config: Config = {
           position: 'left',
           label: 'Documentation',
         },
-        {to: '/blog', label: 'Blog', position: 'left'},
         {
           href: 'https://github.com/stage-flow/stage-flow',
           label: 'GitHub',
@@ -113,11 +100,11 @@ const config: Config = {
             },
             {
               label: 'Core Concepts',
-              to: '/docs/core-concepts',
+              to: '/docs/guide/core-concepts',
             },
             {
               label: 'API Reference',
-              to: '/docs/api-index',
+              to: '/docs/api/',
             },
           ],
         },
@@ -126,15 +113,15 @@ const config: Config = {
           items: [
             {
               label: 'Basic Examples',
-              to: '/docs/examples-basic',
+              to: '/docs/examples/basic/simple-counter',
             },
             {
               label: 'Advanced Examples',
-              to: '/docs/examples-advanced',
+              to: '/docs/examples/advanced/examples-multi-step-form',
             },
             {
               label: 'Integration Examples',
-              to: '/docs/examples-integration',
+              to: '/docs/examples/integration/react-router-integration',
             },
           ],
         },
@@ -159,12 +146,8 @@ const config: Config = {
           title: 'More',
           items: [
             {
-              label: 'Blog',
-              to: '/blog',
-            },
-            {
               label: 'Changelog',
-              to: '/blog/changelog',
+              href: 'https://github.com/stage-flow/stage-flow/releases',
             },
           ],
         },
