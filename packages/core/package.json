@@ -67,8 +67,5 @@
   "bugs": {
     "url": "https://github.com/simplecore-inc/stage-flow/issues"
   },
-  "homepage": "https://simplecore-inc.github.io/stage-flow/",
-  "dependencies": {
-    "@stage-flow/react": "^0.0.2"
-  }
+  "homepage": "https://simplecore-inc.github.io/stage-flow/"
 }

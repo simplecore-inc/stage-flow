@@ -14,35 +14,38 @@ npm install @stage-flow/react @stage-flow/core
 
 ## Quick Start
 
+### Simple Counter Example
+
 ```tsx
+import React, { useEffect } from 'react';
 import { StageFlowEngine } from '@stage-flow/core';
 import { StageFlowProvider, StageRenderer, useStageFlow } from '@stage-flow/react';
 
-// Define your stages
-type AppStages = 'idle' | 'loading' | 'success' | 'error';
-
 // Create engine
-const engine = new StageFlowEngine({
+const counterEngine = new StageFlowEngine({
   initial: 'idle',
   stages: [
     {
       name: 'idle',
-      transitions: [{ target: 'loading', event: 'start' }]
-    },
-    {
-      name: 'loading',
       transitions: [
-        { target: 'success', event: 'complete' },
-        { target: 'error', event: 'error' }
+        { target: 'counting', event: 'start' },
+        { target: 'counting', event: 'reset' }
       ]
     },
     {
-      name: 'success',
-      transitions: [{ target: 'idle', event: 'reset' }]
+      name: 'counting',
+      transitions: [
+        { target: 'paused', event: 'pause' },
+        { target: 'idle', event: 'stop' },
+        { target: 'idle', event: 'complete' }
+      ]
     },
     {
-      name: 'error',
-      transitions: [{ target: 'idle', event: 'retry' }]
+      name: 'paused',
+      transitions: [
+        { target: 'counting', event: 'resume' },
+        { target: 'idle', event: 'stop' }
+      ]
     }
   ]
 });
@@ -50,39 +53,394 @@ const engine = new StageFlowEngine({
 // Stage components
 const IdleComponent = () => {
   const { send } = useStageFlow();
-  return <button onClick={() => send('start')}>Start</button>;
+  
+  return (
+    <div>
+      <h2>Counter - Ready</h2>
+      <button onClick={() => send('start')}>Start Counter</button>
+      <button onClick={() => send('reset')}>Reset</button>
+    </div>
+  );
 };
 
-const LoadingComponent = () => {
-  const { send } = useStageFlow();
-  return <div>Loading... <button onClick={() => send('complete')}>Complete</button></div>;
+const CountingComponent = () => {
+  const { data, send } = useStageFlow();
+  
+  return (
+    <div>
+      <h2>Counter - Running</h2>
+      <p>Count: {data?.count || 0}</p>
+      <p>Max Count: {data?.maxCount || 10}</p>
+      <p>Status: {data?.isRunning ? 'Running' : 'Paused'}</p>
+      <button onClick={() => send('pause')}>Pause</button>
+      <button onClick={() => send('stop')}>Stop</button>
+      <button onClick={() => send('complete')}>Complete</button>
+    </div>
+  );
 };
 
-const SuccessComponent = () => {
-  const { send } = useStageFlow();
-  return <div>Success! <button onClick={() => send('reset')}>Reset</button></div>;
-};
-
-const ErrorComponent = () => {
-  const { send } = useStageFlow();
-  return <div>Error! <button onClick={() => send('retry')}>Retry</button></div>;
+const PausedComponent = () => {
+  const { data, send } = useStageFlow();
+  
+  return (
+    <div>
+      <h2>Counter - Paused</h2>
+      <p>Count: {data?.count || 0}</p>
+      <p>Status: Paused</p>
+      <button onClick={() => send('resume')}>Resume</button>
+      <button onClick={() => send('stop')}>Stop</button>
+    </div>
+  );
 };
 
 // Main App component
 function App() {
+  useEffect(() => {
+    // Start the engine when component mounts
+    counterEngine.start();
+  }, []);
+
   return (
-    <StageFlowProvider engine={engine}>
+    <StageFlowProvider engine={counterEngine}>
       <StageRenderer
         stageComponents={{
           idle: IdleComponent,
-          loading: LoadingComponent,
-          success: SuccessComponent,
+          counting: CountingComponent,
+          paused: PausedComponent
+        }}
+      />
+    </StageFlowProvider>
+  );
+}
+
+export default App;
+```
+
+### Form Validation Example
+
+```tsx
+import React, { useState, useEffect } from 'react';
+import { StageFlowEngine } from '@stage-flow/core';
+import { StageFlowProvider, StageRenderer, useStageFlow } from '@stage-flow/react';
+
+const formEngine = new StageFlowEngine({
+  initial: 'editing',
+  stages: [
+    {
+      name: 'editing',
+      transitions: [{ target: 'validating', event: 'validate' }]
+    },
+    {
+      name: 'validating',
+      transitions: [
+        { target: 'editing', event: 'invalid' },
+        { target: 'submitting', event: 'valid' }
+      ]
+    },
+    {
+      name: 'submitting',
+      transitions: [
+        { target: 'error', event: 'error' },
+        { target: 'complete', event: 'success' }
+      ]
+    },
+    {
+      name: 'complete',
+      transitions: [{ target: 'editing', event: 'reset' }]
+    },
+    {
+      name: 'error',
+      transitions: [{ target: 'editing', event: 'retry' }]
+    }
+  ]
+});
+
+// Form validation functions
+function validateForm(form: { name: string; email: string }) {
+  const errors: Record<string, string> = {};
+  
+  if (!form.name.trim()) {
+    errors.name = 'Name is required';
+  }
+  
+  if (!form.email.trim()) {
+    errors.email = 'Email is required';
+  } else if (!isValidEmail(form.email)) {
+    errors.email = 'Invalid email format';
+  }
+  
+  return errors;
+}
+
+function isValidEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+// Stage components
+const EditingComponent = () => {
+  const { data, send, setStageData } = useStageFlow();
+  const [formData, setFormData] = useState({
+    name: data?.form?.name || '',
+    email: data?.form?.email || ''
+  });
+
+  const handleSubmit = async () => {
+    setStageData({ form: formData });
+    await send('validate');
+  };
+
+  return (
+    <div>
+      <h2>Form - Editing</h2>
+      <input
+        type="text"
+        placeholder="Name"
+        value={formData.name}
+        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+      />
+      <input
+        type="email"
+        placeholder="Email"
+        value={formData.email}
+        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+      />
+      <button onClick={handleSubmit}>Validate</button>
+    </div>
+  );
+};
+
+const ValidatingComponent = () => {
+  const { data, send, setStageData } = useStageFlow();
+  
+  useEffect(() => {
+    const validate = async () => {
+      const errors = validateForm(data?.form || { name: '', email: '' });
+      
+      if (Object.keys(errors).length === 0) {
+        setStageData({ form: data?.form, errors: {} });
+        await send('valid');
+      } else {
+        setStageData({ form: data?.form, errors });
+        await send('invalid');
+      }
+    };
+    
+    validate();
+  }, []);
+
+  return (
+    <div>
+      <h2>Form - Validating</h2>
+      <p>Validating form data...</p>
+    </div>
+  );
+};
+
+const SubmittingComponent = () => {
+  const { data, send, setStageData } = useStageFlow();
+  
+  useEffect(() => {
+    const submit = async () => {
+      try {
+        // Simulate API call
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        setStageData({ form: data?.form, result: 'success' });
+        await send('success');
+      } catch (error) {
+        setStageData({ form: data?.form, error: error.message });
+        await send('error');
+      }
+    };
+    
+    submit();
+  }, []);
+
+  return (
+    <div>
+      <h2>Form - Submitting</h2>
+      <p>Submitting form data...</p>
+    </div>
+  );
+};
+
+const CompleteComponent = () => {
+  const { data, send } = useStageFlow();
+  
+  return (
+    <div>
+      <h2>Form - Complete</h2>
+      <p>Form submitted successfully!</p>
+      <p>Name: {data?.form?.name}</p>
+      <p>Email: {data?.form?.email}</p>
+      <button onClick={() => send('reset')}>Submit Another</button>
+    </div>
+  );
+};
+
+const ErrorComponent = () => {
+  const { data, send } = useStageFlow();
+  
+  return (
+    <div>
+      <h2>Form - Error</h2>
+      <p>Error: {data?.error}</p>
+      <button onClick={() => send('retry')}>Try Again</button>
+    </div>
+  );
+};
+
+// Main App component
+function App() {
+  useEffect(() => {
+    // Start the engine when component mounts
+    formEngine.start();
+  }, []);
+
+  return (
+    <StageFlowProvider engine={formEngine}>
+      <StageRenderer
+        stageComponents={{
+          editing: EditingComponent,
+          validating: ValidatingComponent,
+          submitting: SubmittingComponent,
+          complete: CompleteComponent,
           error: ErrorComponent
         }}
       />
     </StageFlowProvider>
   );
 }
+
+export default App;
+```
+
+### Game State Example
+
+```tsx
+import React, { useEffect } from 'react';
+import { StageFlowEngine } from '@stage-flow/core';
+import { StageFlowProvider, StageRenderer, useStageFlow } from '@stage-flow/react';
+
+const gameEngine = new StageFlowEngine({
+  initial: 'menu',
+  stages: [
+    {
+      name: 'menu',
+      transitions: [{ target: 'playing', event: 'start' }]
+    },
+    {
+      name: 'playing',
+      transitions: [
+        { target: 'paused', event: 'pause' },
+        { target: 'gameOver', event: 'lose' },
+        { target: 'victory', event: 'win' }
+      ]
+    },
+    {
+      name: 'paused',
+      transitions: [
+        { target: 'playing', event: 'resume' },
+        { target: 'menu', event: 'quit' }
+      ]
+    },
+    {
+      name: 'gameOver',
+      transitions: [{ target: 'menu', event: 'restart' }]
+    },
+    {
+      name: 'victory',
+      transitions: [{ target: 'menu', event: 'restart' }]
+    }
+  ]
+});
+
+// Stage components
+const MenuComponent = () => {
+  const { send } = useStageFlow();
+  
+  return (
+    <div>
+      <h2>Game - Menu</h2>
+      <button onClick={() => send('start')}>Start Game</button>
+    </div>
+  );
+};
+
+const PlayingComponent = () => {
+  const { data, send } = useStageFlow();
+  
+  return (
+    <div>
+      <h2>Game - Playing</h2>
+      <p>Score: {data?.score || 0}</p>
+      <p>Level: {data?.level || 1}</p>
+      <button onClick={() => send('pause')}>Pause</button>
+      <button onClick={() => send('win')}>Win</button>
+      <button onClick={() => send('lose')}>Lose</button>
+    </div>
+  );
+};
+
+const PausedComponent = () => {
+  const { send } = useStageFlow();
+  
+  return (
+    <div>
+      <h2>Game - Paused</h2>
+      <button onClick={() => send('resume')}>Resume</button>
+      <button onClick={() => send('quit')}>Quit to Menu</button>
+    </div>
+  );
+};
+
+const GameOverComponent = () => {
+  const { data, send } = useStageFlow();
+  
+  return (
+    <div>
+      <h2>Game - Game Over</h2>
+      <p>Final Score: {data?.score || 0}</p>
+      <button onClick={() => send('restart')}>Play Again</button>
+    </div>
+  );
+};
+
+const VictoryComponent = () => {
+  const { data, send } = useStageFlow();
+  
+  return (
+    <div>
+      <h2>Game - Victory!</h2>
+      <p>Final Score: {data?.score || 0}</p>
+      <p>Level Completed: {data?.level || 1}</p>
+      <button onClick={() => send('restart')}>Play Again</button>
+    </div>
+  );
+};
+
+// Main App component
+function App() {
+  useEffect(() => {
+    // Start the engine when component mounts
+    gameEngine.start();
+  }, []);
+
+  return (
+    <StageFlowProvider engine={gameEngine}>
+      <StageRenderer
+        stageComponents={{
+          menu: MenuComponent,
+          playing: PlayingComponent,
+          paused: PausedComponent,
+          gameOver: GameOverComponent,
+          victory: VictoryComponent
+        }}
+      />
+    </StageFlowProvider>
+  );
+}
+
+export default App;
 ```
 
 ## API Reference
@@ -113,10 +471,23 @@ Component that automatically renders the correct UI component for the current st
 
 ### useStageFlow Hook
 
-React hook to access the current stage, data, and send function.
+React hook to access the current stage, data, and engine methods.
 
 ```tsx
-const { currentStage, data, send, engine } = useStageFlow();
+const { 
+  currentStage, 
+  data, 
+  send, 
+  goTo,
+  setStageData, 
+  isTransitioning,
+  pauseTimers,
+  resumeTimers,
+  resetTimers,
+  getTimerRemainingTime,
+  areTimersPaused,
+  engine 
+} = useStageFlow();
 ```
 
 #### Returns
@@ -124,7 +495,36 @@ const { currentStage, data, send, engine } = useStageFlow();
 - `currentStage`: Current stage name
 - `data`: Current stage data
 - `send(event, data?)`: Function to send events
+- `goTo(stage, data?)`: Function to navigate directly to a stage
+- `setStageData(data)`: Function to update stage data
+- `isTransitioning`: Whether a transition is currently in progress
+- `pauseTimers()`: Pause all timers for the current stage
+- `resumeTimers()`: Resume all paused timers for the current stage
+- `resetTimers()`: Reset all timers for the current stage
+- `getTimerRemainingTime()`: Get the remaining time for timers
+- `areTimersPaused()`: Check if timers are paused
 - `engine`: The StageFlowEngine instance
+
+### useStageData Hook
+
+React hook to access only the current stage data.
+
+```tsx
+const data = useStageData(engine);
+```
+
+### useStageEffect Hook
+
+React hook to get the current stage's effect configuration.
+
+```tsx
+const { effect, isLoading } = useStageEffect(engine, defaultEffect);
+```
+
+#### Returns
+
+- `effect`: Current stage effect configuration
+- `isLoading`: Whether the effect is loading/resolving
 
 ## Documentation
 

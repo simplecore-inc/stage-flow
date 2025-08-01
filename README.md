@@ -32,11 +32,9 @@ npm install @stage-flow/plugins
 ## Quick Start
 
 ```tsx
+import React, { useEffect } from 'react';
 import { StageFlowEngine } from '@stage-flow/core';
-import { StageFlowProvider, StageRenderer } from '@stage-flow/react';
-
-// Define your stages
-type AppStages = 'idle' | 'loading' | 'success' | 'error';
+import { StageFlowProvider, StageRenderer, useStageFlow } from '@stage-flow/react';
 
 // Create engine
 const engine = new StageFlowEngine({
@@ -64,8 +62,34 @@ const engine = new StageFlowEngine({
   ]
 });
 
-// Use in React
+// Stage components
+const IdleComponent = () => {
+  const { send } = useStageFlow();
+  return <button onClick={() => send('start')}>Start</button>;
+};
+
+const LoadingComponent = () => {
+  const { send } = useStageFlow();
+  return <div>Loading... <button onClick={() => send('complete')}>Complete</button></div>;
+};
+
+const SuccessComponent = () => {
+  const { send } = useStageFlow();
+  return <div>Success! <button onClick={() => send('reset')}>Reset</button></div>;
+};
+
+const ErrorComponent = () => {
+  const { send } = useStageFlow();
+  return <div>Error! <button onClick={() => send('retry')}>Retry</button></div>;
+};
+
+// Main App component
 function App() {
+  useEffect(() => {
+    // Start the engine when component mounts
+    engine.start();
+  }, []);
+
   return (
     <StageFlowProvider engine={engine}>
       <StageRenderer
@@ -79,6 +103,8 @@ function App() {
     </StageFlowProvider>
   );
 }
+
+export default App;
 ```
 
 ## Documentation
