@@ -186,9 +186,9 @@ test('should work with React components', () => {
 
 ## Documentation
 
-- [Testing Guide](https://stage-flow.simplecore.dev/docs/guide/testing)
-- [Testing API](https://stage-flow.simplecore.dev/docs/api/testing)
-- [Testing Examples](https://stage-flow.simplecore.dev/docs/examples/testing)
+- [Testing Guide](https://simplecore-inc.github.io/stage-flow/docs/guide/testing)
+- [Testing API](https://simplecore-inc.github.io/stage-flow/docs/api/testing)
+- [Testing Examples](https://simplecore-inc.github.io/stage-flow/docs/examples/testing)
 
 ## License
 

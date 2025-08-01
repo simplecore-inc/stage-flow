@@ -128,9 +128,9 @@ const { currentStage, data, send, engine } = useStageFlow();
 
 ## Documentation
 
-- [React Integration](https://stage-flow.simplecore.dev/docs/react/)
-- [Hooks Guide](https://stage-flow.simplecore.dev/docs/react/hooks)
-- [Components Guide](https://stage-flow.simplecore.dev/docs/react/components)
+- [React Integration](https://simplecore-inc.github.io/stage-flow/docs/react/)
+- [Hooks Guide](https://simplecore-inc.github.io/stage-flow/docs/react/hooks)
+- [Components Guide](https://simplecore-inc.github.io/stage-flow/docs/react/components)
 
 ## License
 

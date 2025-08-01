@@ -136,9 +136,9 @@ const customPlugin: Plugin = {
 
 ## Documentation
 
-- [Plugin System](https://stage-flow.simplecore.dev/docs/guide/plugin-system)
-- [Built-in Plugins](https://stage-flow.simplecore.dev/docs/api/plugins)
-- [Creating Custom Plugins](https://stage-flow.simplecore.dev/docs/guide/plugin-system#custom-plugins)
+- [Plugin System](https://simplecore-inc.github.io/stage-flow/docs/guide/plugin-system)
+- [Built-in Plugins](https://simplecore-inc.github.io/stage-flow/docs/api/plugins)
+- [Creating Custom Plugins](https://simplecore-inc.github.io/stage-flow/docs/guide/plugin-system#custom-plugins)
 
 ## License
 

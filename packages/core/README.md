@@ -86,9 +86,9 @@ interface EngineConfig {
 
 ## Documentation
 
-- [Getting Started](https://stage-flow.simplecore.dev/docs/guide/getting-started)
-- [Core Concepts](https://stage-flow.simplecore.dev/docs/guide/core-concepts)
-- [API Reference](https://stage-flow.simplecore.dev/docs/api/core)
+- [Getting Started](https://simplecore-inc.github.io/stage-flow/docs/guide/getting-started)
+- [Core Concepts](https://simplecore-inc.github.io/stage-flow/docs/guide/core-concepts)
+- [API Reference](https://simplecore-inc.github.io/stage-flow/docs/api/core)
 
 ## License
 

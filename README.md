@@ -83,10 +83,10 @@ function App() {
 
 ## Documentation
 
-- [Getting Started](https://stage-flow.dev/docs/guide/getting-started)
-- [Core Concepts](https://stage-flow.dev/docs/guide/core-concepts)
-- [API Reference](https://stage-flow.dev/docs/api/)
-- [Examples](https://stage-flow.dev/docs/examples/basic/simple-counter)
+- [Getting Started](https://simplecore-inc.github.io/stage-flow/docs/guide/getting-started)
+- [Core Concepts](https://simplecore-inc.github.io/stage-flow/docs/guide/core-concepts)
+- [API Reference](https://simplecore-inc.github.io/stage-flow/docs/api/)
+- [Examples](https://simplecore-inc.github.io/stage-flow/docs/examples/basic/simple-counter)
 
 ## Packages
 
