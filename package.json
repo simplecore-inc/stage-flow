@@ -1,6 +1,6 @@
 {
   "name": "stage-flow",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "type": "module",
   "description": "A type-safe, plugin-based stage flow library for React applications",
   "workspaces": [
@@ -18,7 +18,10 @@
     "docs:dev": "cd website && npm start",
     "docs:build": "cd website && npm run build",
     "docs:serve": "cd website && npm run serve",
-    "publish:all": "npm publish --workspaces --access public"
+    "publish:all": "npm publish --workspaces --access public",
+    "version:update": "node scripts/update-versions.js",
+    "release": "node scripts/release.js",
+    "release:manual": "npm run version:update && npm run build:prod && npm run test && npm run publish:all"
   },
   "devDependencies": {
     "@babel/core": "^7.28.0",
