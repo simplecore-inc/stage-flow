@@ -70,7 +70,8 @@ This directory contains GitHub Actions workflows for the Stage Flow project.
 2. Checkout the specified Git tag
 3. Run tests
 4. Build packages
-5. Publish to npm registry
+5. Login to npm registry
+6. Publish to npm registry
 
 **Manual Execution**: ✅ (GitHub Actions UI)
 
@@ -166,6 +167,15 @@ Docs Deploy (docs-deploy.yml)
 ### Required Secrets
 - `NPM_TOKEN`: npm registry authentication token
 
+**How to set up NPM_TOKEN**:
+1. Go to npmjs.com and log in
+2. Go to your profile → Access Tokens
+3. Create a new token with "Automation" type
+4. Copy the token
+5. Go to GitHub repository → Settings → Secrets and variables → Actions
+6. Create new secret named `NPM_TOKEN`
+7. Paste the npm token value
+
 ### Required Permissions
 - `id-token: write`: For GitHub Pages deployment
 - `pages: write`: For GitHub Pages deployment
@@ -177,23 +187,29 @@ Docs Deploy (docs-deploy.yml)
 
 ### Common Issues
 
-1. **NPM Publish fails with tag not found**
+1. **NPM Publish fails with authentication error**
+   - Check if NPM_TOKEN secret is configured in GitHub repository settings
+   - Verify the token has "Automation" type and publish permissions
+   - Ensure the token is not expired
+   - Check if the package name is available on npm
+
+2. **NPM Publish fails with tag not found**
    - Check if Git tag exists: `git tag`
    - Ensure tag format is correct: `v{version}` (e.g., "v0.0.3")
    - Verify tag was created by Release workflow
    - Check tag name spelling
 
-2. **NPM Publish fails**
+3. **NPM Publish fails**
    - Check if Git tag exists
    - Verify NPM_TOKEN secret is configured
    - Ensure package.json version matches tag
 
-3. **Documentation deploy fails**
+4. **Documentation deploy fails**
    - Check if GitHub Pages is enabled
    - Verify repository permissions
    - Check website build logs
 
-4. **Release workflow fails**
+5. **Release workflow fails**
    - Ensure version format is correct (e.g., "0.0.3")
    - Check if all tests pass
    - Verify Git permissions
@@ -202,4 +218,5 @@ Docs Deploy (docs-deploy.yml)
 - Check workflow logs in GitHub Actions tab
 - Verify input parameters are correct
 - Ensure all prerequisites are met
-- Check available tags: `git tag` 
+- Check available tags: `git tag`
+- Verify npm token permissions: https://www.npmjs.com/package/@stage-flow/core 
