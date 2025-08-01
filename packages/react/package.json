@@ -31,7 +31,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@stage-flow/core": "0.0.2",
+    "@stage-flow/core": "file:../core",
     "framer-motion": "^10.16.0"
   },
   "devDependencies": {
