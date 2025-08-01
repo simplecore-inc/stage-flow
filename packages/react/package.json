@@ -35,6 +35,8 @@
     "framer-motion": "^10.16.0"
   },
   "devDependencies": {
+    "@rollup/plugin-node-resolve": "^15.2.1",
+    "@rollup/plugin-terser": "^0.4.4",
     "@rollup/plugin-typescript": "^11.1.5",
     "@testing-library/jest-dom": "^6.6.4",
     "@testing-library/react": "^14.0.0",
