@@ -66,16 +66,19 @@ This directory contains GitHub Actions workflows for the Stage Flow project.
 - `tag` (required): Git tag to publish (e.g., "v0.0.3")
 
 **Actions**:
-1. Checkout the specified Git tag
-2. Run tests
-3. Build packages
-4. Publish to npm registry
+1. Verify tag exists
+2. Checkout the specified Git tag
+3. Run tests
+4. Build packages
+5. Publish to npm registry
 
 **Manual Execution**: ✅ (GitHub Actions UI)
 
 **Prerequisites**:
 - Git tag must exist (created by Release workflow)
 - NPM_TOKEN secret must be configured
+
+**Important**: Tag format must be `v{version}` (e.g., "v0.0.3")
 
 **Example**:
 ```bash
@@ -174,17 +177,23 @@ Docs Deploy (docs-deploy.yml)
 
 ### Common Issues
 
-1. **NPM Publish fails**
+1. **NPM Publish fails with tag not found**
+   - Check if Git tag exists: `git tag`
+   - Ensure tag format is correct: `v{version}` (e.g., "v0.0.3")
+   - Verify tag was created by Release workflow
+   - Check tag name spelling
+
+2. **NPM Publish fails**
    - Check if Git tag exists
    - Verify NPM_TOKEN secret is configured
    - Ensure package.json version matches tag
 
-2. **Documentation deploy fails**
+3. **Documentation deploy fails**
    - Check if GitHub Pages is enabled
    - Verify repository permissions
    - Check website build logs
 
-3. **Release workflow fails**
+4. **Release workflow fails**
    - Ensure version format is correct (e.g., "0.0.3")
    - Check if all tests pass
    - Verify Git permissions
@@ -192,4 +201,5 @@ Docs Deploy (docs-deploy.yml)
 ### Debugging
 - Check workflow logs in GitHub Actions tab
 - Verify input parameters are correct
-- Ensure all prerequisites are met 
+- Ensure all prerequisites are met
+- Check available tags: `git tag` 
