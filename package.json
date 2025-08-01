@@ -1,6 +1,6 @@
 {
   "name": "stage-flow",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "type": "module",
   "description": "A type-safe, plugin-based stage flow library for React applications",
   "workspaces": [
