@@ -17,7 +17,8 @@
     "analyze": "node scripts/analyze-bundle.js",
     "docs:dev": "cd website && npm start",
     "docs:build": "cd website && npm run build",
-    "docs:serve": "cd website && npm run serve"
+    "docs:serve": "cd website && npm run serve",
+    "publish:all": "npm publish --workspaces --access public"
   },
   "devDependencies": {
     "@babel/core": "^7.28.0",
