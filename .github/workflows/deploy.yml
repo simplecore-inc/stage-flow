@@ -23,8 +23,19 @@ jobs:
       - name: Install dependencies
         run: |
           npm ci
-          cd website
-          npm ci
+          cd packages/core && npm ci
+          cd ../react && npm ci
+          cd ../plugins && npm ci
+          cd ../testing && npm ci
+          cd ../../website && npm ci
+
+      - name: Build packages
+        run: |
+          npm run build:prod
+          cd packages/core && npm run build:prod
+          cd ../react && npm run build:prod
+          cd ../plugins && npm run build:prod
+          cd ../testing && npm run build:prod
 
       - name: Build website
         run: |
