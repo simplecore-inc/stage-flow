@@ -1,6 +1,6 @@
 {
   "name": "@stage-flow/core",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "type": "module",
   "description": "Framework-agnostic core stage flow engine",
   "main": "dist/index.js",
