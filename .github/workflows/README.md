@@ -66,12 +66,14 @@ This directory contains GitHub Actions workflows for the Stage Flow project.
 - `tag` (required): Git tag to publish (e.g., "v0.0.3")
 
 **Actions**:
-1. Verify tag exists
-2. Checkout the specified Git tag
-3. Run tests
-4. Build packages
-5. Login to npm registry
-6. Publish to npm registry
+1. Checkout repository with full history
+2. Fetch all tags from remote
+3. Verify tag exists
+4. Checkout the specified Git tag
+5. Run tests
+6. Build packages
+7. Login to npm registry
+8. Publish to npm registry
 
 **Manual Execution**: ✅ (GitHub Actions UI)
 
@@ -198,6 +200,7 @@ Docs Deploy (docs-deploy.yml)
    - Ensure tag format is correct: `v{version}` (e.g., "v0.0.3")
    - Verify tag was created by Release workflow
    - Check tag name spelling
+   - Ensure tag was pushed to remote: `git push origin v0.0.3`
 
 3. **NPM Publish fails**
    - Check if Git tag exists
@@ -219,4 +222,5 @@ Docs Deploy (docs-deploy.yml)
 - Verify input parameters are correct
 - Ensure all prerequisites are met
 - Check available tags: `git tag`
+- Check remote tags: `git ls-remote --tags origin`
 - Verify npm token permissions: https://www.npmjs.com/package/@stage-flow/core 
