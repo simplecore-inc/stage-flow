@@ -34,7 +34,7 @@ npm install @stage-flow/plugins
 ```tsx
 import React, { useEffect } from 'react';
 import { StageFlowEngine } from '@stage-flow/core';
-import { StageFlowProvider, StageRenderer, useStageFlow } from '@stage-flow/react';
+import { StageFlowProvider, StageRenderer } from '@stage-flow/react';
 
 // Create engine
 const engine = new StageFlowEngine({
@@ -62,25 +62,48 @@ const engine = new StageFlowEngine({
   ]
 });
 
-// Stage components
-const IdleComponent = () => {
-  const { send } = useStageFlow();
-  return <button onClick={() => send('start')}>Start</button>;
+// Stage components receive props directly from StageRenderer
+const IdleComponent = ({ currentStage, data, send, goTo, setStageData, isTransitioning }: any) => {
+  return (
+    <div>
+      <p>Current Stage: {currentStage}</p>
+      <p>Is Transitioning: {isTransitioning ? 'Yes' : 'No'}</p>
+      <button onClick={() => send('start')}>Start</button>
+    </div>
+  );
 };
 
-const LoadingComponent = () => {
-  const { send } = useStageFlow();
-  return <div>Loading... <button onClick={() => send('complete')}>Complete</button></div>;
+const LoadingComponent = ({ currentStage, data, send, goTo, setStageData, isTransitioning }: any) => {
+  return (
+    <div>
+      <p>Current Stage: {currentStage}</p>
+      <p>Is Transitioning: {isTransitioning ? 'Yes' : 'No'}</p>
+      <p>Loading...</p>
+      <button onClick={() => send('complete')}>Complete</button>
+    </div>
+  );
 };
 
-const SuccessComponent = () => {
-  const { send } = useStageFlow();
-  return <div>Success! <button onClick={() => send('reset')}>Reset</button></div>;
+const SuccessComponent = ({ currentStage, data, send, goTo, setStageData, isTransitioning }: any) => {
+  return (
+    <div>
+      <p>Current Stage: {currentStage}</p>
+      <p>Is Transitioning: {isTransitioning ? 'Yes' : 'No'}</p>
+      <p>Success!</p>
+      <button onClick={() => send('reset')}>Reset</button>
+    </div>
+  );
 };
 
-const ErrorComponent = () => {
-  const { send } = useStageFlow();
-  return <div>Error! <button onClick={() => send('retry')}>Retry</button></div>;
+const ErrorComponent = ({ currentStage, data, send, goTo, setStageData, isTransitioning }: any) => {
+  return (
+    <div>
+      <p>Current Stage: {currentStage}</p>
+      <p>Is Transitioning: {isTransitioning ? 'Yes' : 'No'}</p>
+      <p>Error!</p>
+      <button onClick={() => send('retry')}>Retry</button>
+    </div>
+  );
 };
 
 // Main App component

@@ -50,28 +50,28 @@ const counterEngine = new StageFlowEngine({
   ]
 });
 
-// Stage components
-const IdleComponent = () => {
-  const { send } = useStageFlow();
-  
+// Stage components receive props directly from StageRenderer
+const IdleComponent = ({ currentStage, data, send, goTo, setStageData, isTransitioning }: any) => {
   return (
     <div>
       <h2>Counter - Ready</h2>
+      <p>Current Stage: {currentStage}</p>
+      <p>Is Transitioning: {isTransitioning ? 'Yes' : 'No'}</p>
       <button onClick={() => send('start')}>Start Counter</button>
       <button onClick={() => send('reset')}>Reset</button>
     </div>
   );
 };
 
-const CountingComponent = () => {
-  const { data, send } = useStageFlow();
-  
+const CountingComponent = ({ currentStage, data, send, goTo, setStageData, isTransitioning }: any) => {
   return (
     <div>
       <h2>Counter - Running</h2>
+      <p>Current Stage: {currentStage}</p>
       <p>Count: {data?.count || 0}</p>
       <p>Max Count: {data?.maxCount || 10}</p>
       <p>Status: {data?.isRunning ? 'Running' : 'Paused'}</p>
+      <p>Is Transitioning: {isTransitioning ? 'Yes' : 'No'}</p>
       <button onClick={() => send('pause')}>Pause</button>
       <button onClick={() => send('stop')}>Stop</button>
       <button onClick={() => send('complete')}>Complete</button>
@@ -79,14 +79,14 @@ const CountingComponent = () => {
   );
 };
 
-const PausedComponent = () => {
-  const { data, send } = useStageFlow();
-  
+const PausedComponent = ({ currentStage, data, send, goTo, setStageData, isTransitioning }: any) => {
   return (
     <div>
       <h2>Counter - Paused</h2>
+      <p>Current Stage: {currentStage}</p>
       <p>Count: {data?.count || 0}</p>
       <p>Status: Paused</p>
+      <p>Is Transitioning: {isTransitioning ? 'Yes' : 'No'}</p>
       <button onClick={() => send('resume')}>Resume</button>
       <button onClick={() => send('stop')}>Stop</button>
     </div>
@@ -121,7 +121,7 @@ export default App;
 ```tsx
 import React, { useState, useEffect } from 'react';
 import { StageFlowEngine } from '@stage-flow/core';
-import { StageFlowProvider, StageRenderer, useStageFlow } from '@stage-flow/react';
+import { StageFlowProvider, StageRenderer } from '@stage-flow/react';
 
 const formEngine = new StageFlowEngine({
   initial: 'editing',
@@ -176,9 +176,8 @@ function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-// Stage components
-const EditingComponent = () => {
-  const { data, send, setStageData } = useStageFlow();
+// Stage components receive props directly from StageRenderer
+const EditingComponent = ({ currentStage, data, send, goTo, setStageData, isTransitioning }: any) => {
   const [formData, setFormData] = useState({
     name: data?.form?.name || '',
     email: data?.form?.email || ''
@@ -192,6 +191,8 @@ const EditingComponent = () => {
   return (
     <div>
       <h2>Form - Editing</h2>
+      <p>Current Stage: {currentStage}</p>
+      <p>Is Transitioning: {isTransitioning ? 'Yes' : 'No'}</p>
       <input
         type="text"
         placeholder="Name"
@@ -209,9 +210,7 @@ const EditingComponent = () => {
   );
 };
 
-const ValidatingComponent = () => {
-  const { data, send, setStageData } = useStageFlow();
-  
+const ValidatingComponent = ({ currentStage, data, send, goTo, setStageData, isTransitioning }: any) => {
   useEffect(() => {
     const validate = async () => {
       const errors = validateForm(data?.form || { name: '', email: '' });
@@ -231,14 +230,14 @@ const ValidatingComponent = () => {
   return (
     <div>
       <h2>Form - Validating</h2>
+      <p>Current Stage: {currentStage}</p>
+      <p>Is Transitioning: {isTransitioning ? 'Yes' : 'No'}</p>
       <p>Validating form data...</p>
     </div>
   );
 };
 
-const SubmittingComponent = () => {
-  const { data, send, setStageData } = useStageFlow();
-  
+const SubmittingComponent = ({ currentStage, data, send, goTo, setStageData, isTransitioning }: any) => {
   useEffect(() => {
     const submit = async () => {
       try {
@@ -258,17 +257,19 @@ const SubmittingComponent = () => {
   return (
     <div>
       <h2>Form - Submitting</h2>
+      <p>Current Stage: {currentStage}</p>
+      <p>Is Transitioning: {isTransitioning ? 'Yes' : 'No'}</p>
       <p>Submitting form data...</p>
     </div>
   );
 };
 
-const CompleteComponent = () => {
-  const { data, send } = useStageFlow();
-  
+const CompleteComponent = ({ currentStage, data, send, goTo, setStageData, isTransitioning }: any) => {
   return (
     <div>
       <h2>Form - Complete</h2>
+      <p>Current Stage: {currentStage}</p>
+      <p>Is Transitioning: {isTransitioning ? 'Yes' : 'No'}</p>
       <p>Form submitted successfully!</p>
       <p>Name: {data?.form?.name}</p>
       <p>Email: {data?.form?.email}</p>
@@ -277,12 +278,12 @@ const CompleteComponent = () => {
   );
 };
 
-const ErrorComponent = () => {
-  const { data, send } = useStageFlow();
-  
+const ErrorComponent = ({ currentStage, data, send, goTo, setStageData, isTransitioning }: any) => {
   return (
     <div>
       <h2>Form - Error</h2>
+      <p>Current Stage: {currentStage}</p>
+      <p>Is Transitioning: {isTransitioning ? 'Yes' : 'No'}</p>
       <p>Error: {data?.error}</p>
       <button onClick={() => send('retry')}>Try Again</button>
     </div>
@@ -354,26 +355,26 @@ const gameEngine = new StageFlowEngine({
   ]
 });
 
-// Stage components
-const MenuComponent = () => {
-  const { send } = useStageFlow();
-  
+// Stage components receive props directly from StageRenderer
+const MenuComponent = ({ currentStage, data, send, goTo, setStageData, isTransitioning }: any) => {
   return (
     <div>
       <h2>Game - Menu</h2>
+      <p>Current Stage: {currentStage}</p>
+      <p>Is Transitioning: {isTransitioning ? 'Yes' : 'No'}</p>
       <button onClick={() => send('start')}>Start Game</button>
     </div>
   );
 };
 
-const PlayingComponent = () => {
-  const { data, send } = useStageFlow();
-  
+const PlayingComponent = ({ currentStage, data, send, goTo, setStageData, isTransitioning }: any) => {
   return (
     <div>
       <h2>Game - Playing</h2>
+      <p>Current Stage: {currentStage}</p>
       <p>Score: {data?.score || 0}</p>
       <p>Level: {data?.level || 1}</p>
+      <p>Is Transitioning: {isTransitioning ? 'Yes' : 'No'}</p>
       <button onClick={() => send('pause')}>Pause</button>
       <button onClick={() => send('win')}>Win</button>
       <button onClick={() => send('lose')}>Lose</button>
@@ -381,38 +382,38 @@ const PlayingComponent = () => {
   );
 };
 
-const PausedComponent = () => {
-  const { send } = useStageFlow();
-  
+const PausedComponent = ({ currentStage, data, send, goTo, setStageData, isTransitioning }: any) => {
   return (
     <div>
       <h2>Game - Paused</h2>
+      <p>Current Stage: {currentStage}</p>
+      <p>Is Transitioning: {isTransitioning ? 'Yes' : 'No'}</p>
       <button onClick={() => send('resume')}>Resume</button>
       <button onClick={() => send('quit')}>Quit to Menu</button>
     </div>
   );
 };
 
-const GameOverComponent = () => {
-  const { data, send } = useStageFlow();
-  
+const GameOverComponent = ({ currentStage, data, send, goTo, setStageData, isTransitioning }: any) => {
   return (
     <div>
       <h2>Game - Game Over</h2>
+      <p>Current Stage: {currentStage}</p>
       <p>Final Score: {data?.score || 0}</p>
+      <p>Is Transitioning: {isTransitioning ? 'Yes' : 'No'}</p>
       <button onClick={() => send('restart')}>Play Again</button>
     </div>
   );
 };
 
-const VictoryComponent = () => {
-  const { data, send } = useStageFlow();
-  
+const VictoryComponent = ({ currentStage, data, send, goTo, setStageData, isTransitioning }: any) => {
   return (
     <div>
       <h2>Game - Victory!</h2>
+      <p>Current Stage: {currentStage}</p>
       <p>Final Score: {data?.score || 0}</p>
       <p>Level Completed: {data?.level || 1}</p>
+      <p>Is Transitioning: {isTransitioning ? 'Yes' : 'No'}</p>
       <button onClick={() => send('restart')}>Play Again</button>
     </div>
   );
@@ -457,7 +458,7 @@ React Context Provider that makes the engine available to child components.
 
 ### StageRenderer
 
-Component that automatically renders the correct UI component for the current stage.
+Component that automatically renders the correct UI component for the current stage. Stage components receive props directly from the renderer.
 
 ```tsx
 <StageRenderer
@@ -467,11 +468,23 @@ Component that automatically renders the correct UI component for the current st
     success: SuccessComponent
   }}
 />
+
+// Stage components receive these props:
+const MyStageComponent = ({ 
+  currentStage, 
+  data, 
+  send, 
+  goTo, 
+  setStageData, 
+  isTransitioning 
+}: StageComponentProps) => {
+  return <div>...</div>;
+};
 ```
 
 ### useStageFlow Hook
 
-React hook to access the current stage, data, and engine methods.
+React hook to access the current stage, data, and engine methods. This is useful when you need to access stage flow functionality outside of stage components.
 
 ```tsx
 const { 
@@ -489,6 +502,8 @@ const {
   engine 
 } = useStageFlow();
 ```
+
+**Note**: When using `StageRenderer`, stage components receive these same props directly, so you don't need to use `useStageFlow` inside stage components.
 
 #### Returns
 
