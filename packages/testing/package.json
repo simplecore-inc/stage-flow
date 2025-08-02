@@ -1,6 +1,6 @@
 {
   "name": "@stage-flow/testing",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "type": "module",
   "description": "Testing utilities for stage flow library",
   "main": "dist/index.js",
@@ -31,7 +31,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@stage-flow/core": "^0.0.3"
+    "@stage-flow/core": "^0.0.4"
   },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "^15.2.1",
