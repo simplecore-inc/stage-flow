@@ -2,7 +2,7 @@
  * Tests for StageFlowEngine - Task 2.1
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { StageFlowEngine } from '../engine';
 import { StageFlowConfig } from '../types/core';
 import { ConfigurationError } from '../types/errors';
@@ -13,6 +13,12 @@ interface TestData {
     message?: string;
     count?: number;
 }
+
+afterEach(() => {
+    vi.useRealTimers();
+    vi.clearAllTimers();
+    vi.clearAllMocks();
+});
 
 describe('StageFlowEngine - Task 2.1', () => {
     const validConfig: StageFlowConfig<TestStage, TestData> = {
@@ -486,16 +492,30 @@ describe('StageFlowEngine - Task 2.2', () => {
 
         describe('Timer-based automatic transitions', () => {
             it('should set up timers for transitions with duration', async () => {
+                vi.useFakeTimers();
+                
+                // Create a config with only a single after timer (100ms) from initial to loading
                 const configWithTimer: StageFlowConfig<TestStage, TestData> = {
-                    ...validConfig,
+                    initial: 'initial',
                     stages: [
                         {
                             name: 'initial',
                             transitions: [
-                                { target: 'loading', after: 100 } // Auto-transition after 100ms
+                                { target: 'loading', after: 100 }
                             ]
                         },
-                        ...validConfig.stages.slice(1)
+                        {
+                            name: 'loading',
+                            transitions: [] // No after or event transitions
+                        },
+                        {
+                            name: 'success',
+                            transitions: []
+                        },
+                        {
+                            name: 'error',
+                            transitions: []
+                        }
                     ]
                 };
 
@@ -504,13 +524,31 @@ describe('StageFlowEngine - Task 2.2', () => {
 
                 expect(engine.getCurrentStage()).toBe('initial');
 
-                // Wait for auto-transition
-                await new Promise(resolve => setTimeout(resolve, 150));
-
+                // Advance exactly 100ms to trigger only the first timer
+                vi.advanceTimersByTime(100);
+                // Flush microtask queue multiple times to ensure async operations complete
+                // This is necessary in fake timer environments where setTimeout(async () => ...) 
+                // and Promise microtasks may not be fully synchronized
+                for (let i = 0; i < 10; i++) {
+                  await Promise.resolve();
+                }
+                vi.runAllTimers();
+                // Additional flush to ensure all pending microtasks are processed
+                for (let i = 0; i < 10; i++) {
+                  await Promise.resolve();
+                }
                 expect(engine.getCurrentStage()).toBe('loading');
+                
+                // Clean up
+                await engine.stop();
+                
+                // Restore real timers
+                vi.useRealTimers();
             });
 
             it('should clear timers when transitioning away from stage', async () => {
+                vi.useFakeTimers({ toFake: ['setTimeout'] });
+                
                 const configWithTimer: StageFlowConfig<TestStage, TestData> = {
                     ...validConfig,
                     stages: [
@@ -532,13 +570,277 @@ describe('StageFlowEngine - Task 2.2', () => {
 
                 // Transition manually before timer fires
                 await engine.send('start');
+
                 expect(engine.getCurrentStage()).toBe('loading');
 
-                // Wait longer than timer duration to ensure it doesn't fire
-                await new Promise(resolve => setTimeout(resolve, 250));
+                // Advance time longer than timer duration to ensure it doesn't fire
+                vi.advanceTimersByTime(250);
+                // Flush microtask queue to ensure all async operations complete
+                await Promise.resolve();
+                await Promise.resolve();
 
                 // Should still be in loading, not error
                 expect(engine.getCurrentStage()).toBe('loading');
+                
+                // Restore real timers
+                vi.useRealTimers();
+            });
+
+            it('should get timer remaining time correctly', async () => {
+                vi.useFakeTimers();
+                
+                const configWithTimer: StageFlowConfig<TestStage, TestData> = {
+                    initial: 'initial',
+                    stages: [
+                        {
+                            name: 'initial',
+                            transitions: [
+                                { target: 'loading', after: 5000 }
+                            ]
+                        },
+                        {
+                            name: 'loading',
+                            transitions: []
+                        }
+                    ]
+                };
+
+                const engine = new StageFlowEngine(configWithTimer);
+                await engine.start();
+
+                expect(engine.getCurrentStage()).toBe('initial');
+
+                // Get initial remaining time (should be close to 5000ms)
+                const initialRemaining = engine.getTimerRemainingTime();
+                expect(initialRemaining).toBeGreaterThan(4900);
+                expect(initialRemaining).toBeLessThanOrEqual(5000);
+
+                // Advance time by 1000ms
+                vi.advanceTimersByTime(1000);
+                
+                // Get remaining time after 1000ms (should be close to 4000ms)
+                const remainingAfter1000 = engine.getTimerRemainingTime();
+                expect(remainingAfter1000).toBeGreaterThan(3900);
+                expect(remainingAfter1000).toBeLessThanOrEqual(4000);
+
+                // Advance time by another 2000ms
+                vi.advanceTimersByTime(2000);
+                
+                // Get remaining time after 3000ms total (should be close to 2000ms)
+                const remainingAfter3000 = engine.getTimerRemainingTime();
+                expect(remainingAfter3000).toBeGreaterThan(1900);
+                expect(remainingAfter3000).toBeLessThanOrEqual(2000);
+
+                // Clean up
+                await engine.stop();
+                vi.useRealTimers();
+            });
+
+            it('should pause and resume timers correctly', async () => {
+                vi.useFakeTimers();
+                
+                const configWithTimer: StageFlowConfig<TestStage, TestData> = {
+                    initial: 'initial',
+                    stages: [
+                        {
+                            name: 'initial',
+                            transitions: [
+                                { target: 'loading', after: 5000 }
+                            ]
+                        },
+                        {
+                            name: 'loading',
+                            transitions: []
+                        }
+                    ]
+                };
+
+                const engine = new StageFlowEngine(configWithTimer);
+                await engine.start();
+
+                expect(engine.getCurrentStage()).toBe('initial');
+
+                // Get initial remaining time
+                const initialRemaining = engine.getTimerRemainingTime();
+                expect(initialRemaining).toBeGreaterThan(4900);
+
+                // Advance time by 1000ms
+                vi.advanceTimersByTime(1000);
+                
+                // Pause timers
+                engine.pauseTimers();
+                expect(engine.areTimersPaused()).toBe(true);
+
+                // Advance time by another 1000ms (should not affect remaining time when paused)
+                vi.advanceTimersByTime(1000);
+                
+                // Remaining time should be the same as before pause
+                const remainingAfterPause = engine.getTimerRemainingTime();
+                expect(remainingAfterPause).toBeGreaterThan(3900);
+                expect(remainingAfterPause).toBeLessThanOrEqual(4000);
+
+                // Resume timers
+                engine.resumeTimers();
+                expect(engine.areTimersPaused()).toBe(false);
+
+                // Advance time by 1000ms again
+                vi.advanceTimersByTime(1000);
+                
+                // Now remaining time should be reduced
+                const remainingAfterResume = engine.getTimerRemainingTime();
+                expect(remainingAfterResume).toBeGreaterThan(2900);
+                expect(remainingAfterResume).toBeLessThanOrEqual(3000);
+
+                // Clean up
+                await engine.stop();
+                vi.useRealTimers();
+            });
+
+            it('should reset timers to original duration', async () => {
+                vi.useFakeTimers();
+                
+                const configWithTimer: StageFlowConfig<TestStage, TestData> = {
+                    initial: 'initial',
+                    stages: [
+                        {
+                            name: 'initial',
+                            transitions: [
+                                { target: 'loading', after: 5000 }
+                            ]
+                        },
+                        {
+                            name: 'loading',
+                            transitions: []
+                        }
+                    ]
+                };
+
+                const engine = new StageFlowEngine(configWithTimer);
+                await engine.start();
+
+                expect(engine.getCurrentStage()).toBe('initial');
+
+                // Advance time by 2000ms
+                vi.advanceTimersByTime(2000);
+                
+                // Get remaining time after 2000ms
+                const remainingAfter2000 = engine.getTimerRemainingTime();
+                expect(remainingAfter2000).toBeGreaterThan(2900);
+                expect(remainingAfter2000).toBeLessThanOrEqual(3000);
+
+                // Reset timers
+                engine.resetTimers();
+                
+                // Remaining time should be back to original duration
+                const remainingAfterReset = engine.getTimerRemainingTime();
+                expect(remainingAfterReset).toBeGreaterThan(4900);
+                expect(remainingAfterReset).toBeLessThanOrEqual(5000);
+
+                // Clean up
+                await engine.stop();
+                vi.useRealTimers();
+            });
+
+            it('should handle timer transitions between stages correctly', async () => {
+                vi.useFakeTimers();
+                
+                const configWithTimerTransitions: StageFlowConfig<TestStage, TestData> = {
+                    initial: 'initial',
+                    stages: [
+                        {
+                            name: 'initial',
+                            transitions: [
+                                { target: 'loading', after: 3000 }
+                            ]
+                        },
+                        {
+                            name: 'loading',
+                            transitions: [
+                                { target: 'success', after: 2000 }
+                            ]
+                        },
+                        {
+                            name: 'success',
+                            transitions: []
+                        }
+                    ]
+                };
+
+                const engine = new StageFlowEngine(configWithTimerTransitions);
+                await engine.start();
+
+                expect(engine.getCurrentStage()).toBe('initial');
+
+                // Get initial remaining time (should be 3000ms)
+                const initialRemaining = engine.getTimerRemainingTime();
+                expect(initialRemaining).toBeGreaterThan(2900);
+                expect(initialRemaining).toBeLessThanOrEqual(3000);
+
+                // Advance time to trigger first timer
+                vi.advanceTimersByTime(3000);
+                for (let i = 0; i < 10; i++) {
+                    await Promise.resolve();
+                }
+                vi.runAllTimers();
+                for (let i = 0; i < 10; i++) {
+                    await Promise.resolve();
+                }
+
+                expect(engine.getCurrentStage()).toBe('loading');
+
+                // Get remaining time for loading stage (should be 2000ms)
+                const loadingRemaining = engine.getTimerRemainingTime();
+                expect(loadingRemaining).toBeGreaterThan(1900);
+                expect(loadingRemaining).toBeLessThanOrEqual(2000);
+
+                // Advance time to trigger second timer
+                vi.advanceTimersByTime(2000);
+                for (let i = 0; i < 10; i++) {
+                    await Promise.resolve();
+                }
+                vi.runAllTimers();
+                for (let i = 0; i < 10; i++) {
+                    await Promise.resolve();
+                }
+
+                expect(engine.getCurrentStage()).toBe('success');
+
+                // No timers should be active in success stage
+                expect(engine.getTimerRemainingTime()).toBe(0);
+
+                // Clean up
+                await engine.stop();
+                vi.useRealTimers();
+            });
+
+            it('should return 0 when no timers are active', async () => {
+                const configWithoutTimers: StageFlowConfig<TestStage, TestData> = {
+                    initial: 'initial',
+                    stages: [
+                        {
+                            name: 'initial',
+                            transitions: [
+                                { target: 'loading', event: 'start' }
+                            ]
+                        },
+                        {
+                            name: 'loading',
+                            transitions: []
+                        }
+                    ]
+                };
+
+                const engine = new StageFlowEngine(configWithoutTimers);
+                await engine.start();
+
+                expect(engine.getCurrentStage()).toBe('initial');
+
+                // No timers should be active
+                expect(engine.getTimerRemainingTime()).toBe(0);
+                expect(engine.areTimersPaused()).toBe(false);
+
+                // Clean up
+                await engine.stop();
             });
         });
 

@@ -325,25 +325,7 @@ describe('Mock Utilities', () => {
     });
   });
 
-  describe.skip('waitForCalls', () => {
-    it('should wait for expected number of calls', async () => {
-      const mockFn = vi.fn();
 
-      // Call the function after a delay
-      setTimeout(() => {
-        mockFn();
-        mockFn();
-      }, 50);
-
-      await expect(waitForCalls(mockFn, 2, 200)).resolves.toBeUndefined();
-    });
-
-    it('should timeout if expected calls are not reached', async () => {
-      const mockFn = vi.fn();
-
-      await expect(waitForCalls(mockFn, 2, 100)).rejects.toThrow('Timeout waiting for 2 calls. Got 0');
-    });
-  });
 
   describe('resetPluginMocks', () => {
     it('should reset all mocks in a plugin', () => {

@@ -20,6 +20,8 @@ export interface StageProps<TStage extends string, TData = unknown> {
   send: (event: string, data?: TData) => Promise<void>;
   /** Function to navigate to a stage */
   goTo: (stage: TStage, data?: TData) => Promise<void>;
+  /** Function to update stage data without triggering transitions */
+  setStageData: (data: TData) => void;
   /** Whether a transition is in progress */
   isTransitioning: boolean;
 }
@@ -75,7 +77,7 @@ export function StageRenderer<TStage extends string, TData = unknown>({
   className,
   style,
 }: StageRendererProps<TStage, TData>): JSX.Element {
-  const { currentStage, data, send, goTo, isTransitioning, engine: contextEngine } = useStageFlow(engine);
+  const { currentStage, data, send, goTo, setStageData, isTransitioning, engine: contextEngine } = useStageFlow(engine);
   const animationCleanupRef = useRef<(() => void) | null>(null);
 
   // Clean up any ongoing animations when component unmounts or stage changes
@@ -139,6 +141,7 @@ export function StageRenderer<TStage extends string, TData = unknown>({
     data,
     send,
     goTo,
+    setStageData,
     isTransitioning
   };
 
@@ -170,16 +173,26 @@ export function StageRenderer<TStage extends string, TData = unknown>({
     }
   };
 
+  // Accessibility attributes
+  const accessibilityProps = {
+    role: 'region',
+    'aria-label': `Current stage: ${currentStage}`,
+    'aria-live': 'polite' as const,
+    'aria-busy': isTransitioning,
+    'data-stage': currentStage,
+    'data-transitioning': isTransitioning
+  };
+
   if (disableAnimations) {
     return (
-      <div className={className} style={style}>
+      <div className={className} style={style} {...accessibilityProps}>
         {renderStageComponent()}
       </div>
     );
   }
 
   return (
-    <div className={className} style={style}>
+    <div className={className} style={style} {...accessibilityProps}>
       <AnimatePresence 
         mode="wait"
         onExitComplete={handleAnimationComplete}

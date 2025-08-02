@@ -148,26 +148,12 @@ const config: StageFlowConfig<AppStage, AppData> = {
 
 ## Migration Guide
 
-### From XState
+### Migration from Other Libraries
+
+Stage Flow provides a simpler, more React-focused alternative to complex state machines:
 
 ```tsx
-// XState
-const machine = createMachine({
-  initial: 'idle',
-  states: {
-    idle: {
-      on: { START: 'loading' }
-    },
-    loading: {
-      on: { COMPLETE: 'success', CANCEL: 'idle' }
-    },
-    success: {
-      on: { RESET: 'idle' }
-    }
-  }
-});
-
-// Stage Flow
+// Stage Flow - Simple and declarative
 const config: StageFlowConfig<'idle' | 'loading' | 'success'> = {
   initial: 'idle',
   stages: [

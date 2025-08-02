@@ -2,13 +2,23 @@
  * Tests for StageAnimation component
  */
 
+// React import removed as it's not used after fixing the mock
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 
 // Mock framer-motion
 vi.mock('framer-motion', () => ({
   motion: {
-    div: ({ children, ...props }: any) => <div {...props}>{children}</div>
+    div: ({ children, onAnimationStart, onAnimationComplete, ...props }: any) => {
+      // Call animation callbacks immediately for testing
+      // Using setTimeout to avoid React Hook rules violation in test mocks
+      setTimeout(() => {
+        onAnimationStart?.();
+        onAnimationComplete?.();
+      }, 0);
+      
+      return <div {...props}>{children}</div>;
+    }
   },
   AnimatePresence: ({ children }: any) => <>{children}</>
 }));

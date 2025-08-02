@@ -117,18 +117,26 @@ export function useStageFlow<TStage extends string, TData = unknown>(
     // Note: setIsTransitioning(false) is handled by the subscription callback
   }, []);
 
+  // Memoized timer control functions
+  const pauseTimers = useCallback(() => actualEngine.pauseTimers(), [actualEngine]);
+  const resumeTimers = useCallback(() => actualEngine.resumeTimers(), [actualEngine]);
+  const resetTimers = useCallback(() => actualEngine.resetTimers(), [actualEngine]);
+  const getTimerRemainingTime = useCallback(() => actualEngine.getTimerRemainingTime(), [actualEngine]);
+  const areTimersPaused = useCallback(() => actualEngine.areTimersPaused(), [actualEngine]);
+  const setStageData = useCallback((data: TData) => actualEngine.setStageData(data), [actualEngine]);
+
   return {
     currentStage,
     data,
     send,
     goTo,
-    setStageData: (data: TData) => actualEngine.setStageData(data),
+    setStageData,
     isTransitioning,
-    pauseTimers: () => actualEngine.pauseTimers(),
-    resumeTimers: () => actualEngine.resumeTimers(),
-    resetTimers: () => actualEngine.resetTimers(),
-    getTimerRemainingTime: () => actualEngine.getTimerRemainingTime(),
-    areTimersPaused: () => actualEngine.areTimersPaused(),
+    pauseTimers,
+    resumeTimers,
+    resetTimers,
+    getTimerRemainingTime,
+    areTimersPaused,
     engine: actualEngine
   };
 }

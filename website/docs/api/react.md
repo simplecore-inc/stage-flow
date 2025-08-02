@@ -114,6 +114,8 @@ interface StageProps<TStage extends string, TData = unknown> {
   send: (event: string, data?: TData) => Promise<void>;
   /** Function to navigate to a stage */
   goTo: (stage: TStage, data?: TData) => Promise<void>;
+  /** Function to update stage data without triggering transitions */
+  setStageData: (data: TData) => void;
   /** Whether a transition is in progress */
   isTransitioning: boolean;
 }
@@ -323,7 +325,7 @@ function MyComponent() {
 import React from 'react';
 import { StageRenderer } from '@stage-flow/react';
 
-function IdleView({ stage, data, send, goTo, isTransitioning }) {
+function IdleView({ stage, data, send, goTo, setStageData, isTransitioning }) {
   return (
     <div>
       <h2>Idle State</h2>
@@ -334,7 +336,7 @@ function IdleView({ stage, data, send, goTo, isTransitioning }) {
   );
 }
 
-function LoadingView({ stage, data, send, goTo, isTransitioning }) {
+function LoadingView({ stage, data, send, goTo, setStageData, isTransitioning }) {
   return (
     <div>
       <h2>Loading...</h2>
@@ -343,7 +345,7 @@ function LoadingView({ stage, data, send, goTo, isTransitioning }) {
   );
 }
 
-function SuccessView({ stage, data, send, goTo, isTransitioning }) {
+function SuccessView({ stage, data, send, goTo, setStageData, isTransitioning }) {
   return (
     <div>
       <h2>Success!</h2>
@@ -517,6 +519,213 @@ function TimerControlComponent() {
       <button onClick={handleReset}>Reset Timer</button>
       <p>Hover to pause/resume timer</p>
     </div>
+  );
+}
+```
+
+## Debug and Performance Hooks
+
+### useStageFlowDebug
+
+Hook for debugging stage flow behavior and tracking transitions.
+
+```tsx
+import { useStageFlowDebug } from '@stage-flow/react';
+
+interface StageFlowDebugInfo<TStage extends string, TData = unknown> {
+  currentStage: TStage;
+  previousStage?: TStage;
+  history: Array<{
+    from: TStage;
+    to: TStage;
+    event?: string;
+    timestamp: number;
+    data?: TData;
+  }>;
+  data?: TData;
+  isTransitioning: boolean;
+  transitionCount: number;
+  timeInCurrentStage: number;
+}
+
+function useStageFlowDebug<TStage extends string, TData = unknown>(
+  engine?: StageFlowEngine<TStage, TData>,
+  options?: {
+    logTransitions?: boolean;
+    logDataChanges?: boolean;
+    maxHistorySize?: number;
+    logPrefix?: string;
+  }
+): StageFlowDebugInfo<TStage, TData>;
+```
+
+### useStageFlowPerformance
+
+Hook for performance monitoring and metrics collection.
+
+```tsx
+import { useStageFlowPerformance } from '@stage-flow/react';
+
+function useStageFlowPerformance<TStage extends string, TData = unknown>(
+  engine?: StageFlowEngine<TStage, TData>
+): StageFlowDebugInfo<TStage, TData> & {
+  averageTransitionTime: number;
+  stageFrequency: Record<TStage, number>;
+  mostVisitedStage: { stage: TStage; count: number };
+};
+```
+
+### useStageFlowProfiler
+
+Hook for React DevTools integration and performance profiling.
+
+```tsx
+import { useStageFlowProfiler } from '@stage-flow/react';
+
+function useStageFlowProfiler<TStage extends string, TData = unknown>(
+  engine?: StageFlowEngine<TStage, TData>,
+  options?: {
+    enabled?: boolean;
+    id?: string;
+    onProfile?: (data: StageFlowProfilerData) => void;
+    logToConsole?: boolean;
+  }
+): {
+  trackEvent: (event: string) => void;
+  onRenderCallback: React.ProfilerOnRenderCallback;
+  currentMetrics: {
+    stage: TStage;
+    timeInStage: number;
+    renderCount: number;
+  };
+};
+```
+
+## Utility Types and Functions
+
+### Type-Safe Configuration
+
+```tsx
+import { 
+  createStageFlowConfig, 
+  createStageComponents, 
+  createStageEffects 
+} from '@stage-flow/react';
+
+// Type-safe configuration
+const config = createStageFlowConfig<'idle' | 'loading' | 'success', AppData>({
+  initialStage: 'idle',
+  initialData: { count: 0 },
+  stages: {
+    idle: { on: { start: 'loading' } },
+    loading: { on: { success: 'success' } },
+    success: { on: { reset: 'idle' } }
+  }
+});
+
+// Type-safe components
+const components = createStageComponents<AppStage, AppData>({
+  idle: IdleComponent,
+  loading: LoadingComponent,
+  success: SuccessComponent
+});
+
+// Type-safe effects
+const effects = createStageEffects<AppStage>({
+  idle: { type: 'fade', duration: 300 },
+  loading: { type: 'slide', duration: 500 },
+  default: { type: 'none' }
+});
+```
+
+### Debug Usage Example
+
+```tsx
+import React from 'react';
+import { 
+  useStageFlow, 
+  useStageFlowDebug, 
+  useStageFlowPerformance 
+} from '@stage-flow/react';
+
+function DebugPanel() {
+  const { currentStage, send } = useStageFlow();
+  const debugInfo = useStageFlowDebug(undefined, {
+    logTransitions: true,
+    logDataChanges: true,
+    maxHistorySize: 20
+  });
+  const perfInfo = useStageFlowPerformance();
+
+  return (
+    <div style={{ padding: '20px', border: '1px solid #ddd' }}>
+      <h3>Debug Information</h3>
+      <p>Current Stage: {debugInfo.currentStage}</p>
+      <p>Previous Stage: {debugInfo.previousStage || 'None'}</p>
+      <p>Transitions: {debugInfo.transitionCount}</p>
+      <p>Time in Stage: {debugInfo.timeInCurrentStage}ms</p>
+      <p>Average Transition Time: {perfInfo.averageTransitionTime.toFixed(2)}ms</p>
+      <p>Most Visited: {perfInfo.mostVisitedStage.stage} ({perfInfo.mostVisitedStage.count} times)</p>
+      
+      <h4>Transition History</h4>
+      <ul>
+        {debugInfo.history.slice(-5).map((transition, index) => (
+          <li key={index}>
+            {transition.from} → {transition.to} 
+            {transition.event && ` (${transition.event})`}
+          </li>
+        ))}
+      </ul>
+      
+      <h4>Stage Frequency</h4>
+      <ul>
+        {Object.entries(perfInfo.stageFrequency).map(([stage, count]) => (
+          <li key={stage}>{stage}: {count} visits</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+```
+
+### Profiler Integration
+
+```tsx
+import React from 'react';
+import { withStageFlowProfiler } from '@stage-flow/react';
+
+// Wrap component with profiler
+const ProfiledApp = withStageFlowProfiler(App, {
+  enabled: process.env.NODE_ENV === 'development',
+  id: 'StageFlowApp',
+  logToConsole: true,
+  onProfile: (data) => {
+    // Send to analytics service
+    analytics.track('stage_performance', data);
+  }
+});
+
+// Or use hook directly
+function MyComponent() {
+  const { trackEvent, onRenderCallback, currentMetrics } = useStageFlowProfiler(
+    engine,
+    { enabled: true }
+  );
+
+  const handleButtonClick = () => {
+    trackEvent('button_click');
+    send('next');
+  };
+
+  return (
+    <React.Profiler id="MyComponent" onRender={onRenderCallback}>
+      <div>
+        <p>Current Stage: {currentMetrics.stage}</p>
+        <p>Time in Stage: {currentMetrics.timeInStage}ms</p>
+        <p>Render Count: {currentMetrics.renderCount}</p>
+        <button onClick={handleButtonClick}>Next</button>
+      </div>
+    </React.Profiler>
   );
 }
 ``` 

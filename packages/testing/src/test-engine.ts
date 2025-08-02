@@ -40,7 +40,7 @@ export class StageFlowTestEngine<TStage extends string, TData = unknown> {
   private engine: StageFlowEngine<TStage, TData>;
   private mockTime: number;
   private mockTimers: Map<string, MockTimer>;
-  private timerIdCounter: number;
+  // Removed unused timerIdCounter variable
   private originalSetTimeout: typeof setTimeout;
   private originalClearTimeout: typeof clearTimeout;
   private isTimeControlActive: boolean;
@@ -52,7 +52,6 @@ export class StageFlowTestEngine<TStage extends string, TData = unknown> {
   ) {
     this.mockTime = options.initialTime || 0;
     this.mockTimers = new Map();
-    this.timerIdCounter = 0;
     this.isTimeControlActive = false;
     this.debug = options.debug || false;
     
@@ -62,14 +61,23 @@ export class StageFlowTestEngine<TStage extends string, TData = unknown> {
 
     // Enable time control before creating the engine so timers are mocked from the start
     this.enableTimeControl();
-
-    // Create the engine
+    // Create the engine (타이머 모킹 이후에 생성해야 함)
     this.engine = new StageFlowEngine(config);
+
+    // mockTime을 globalThis에 노출
+    (globalThis as any).mockTime = this.mockTime;
+
+    // Mock Date.now to use mockTime for timer registration
+    const self = this;
+    global.Date.now = function() { return self.mockTime; };
 
     // Auto-start if requested
     if (options.autoStart !== false) {
       this.start();
     }
+
+    // Sync engine timers with mock timers after engine is started
+    this._syncEngineTimers();
   }
 
   /**
@@ -91,26 +99,6 @@ export class StageFlowTestEngine<TStage extends string, TData = unknown> {
     }
 
     this.isTimeControlActive = true;
-
-    // Mock setTimeout
-    global.setTimeout = ((callback: () => void, delay: number) => {
-      const id = `timer_${this.timerIdCounter++}`;
-      const timer: MockTimer = {
-        id,
-        callback,
-        delay,
-        scheduledTime: this.mockTime + delay,
-        executed: false
-      };
-      
-      this.mockTimers.set(id, timer);
-      
-      if (this.debug) {
-        console.log(`[TestEngine] Timer scheduled: ${id} at ${timer.scheduledTime}`);
-      }
-      
-      return id as any;
-    }) as typeof setTimeout;
 
     // Mock clearTimeout
     global.clearTimeout = ((id: any) => {
@@ -215,13 +203,12 @@ export class StageFlowTestEngine<TStage extends string, TData = unknown> {
    * Gets all pending timers
    */
   getPendingTimers(): Array<{ id: string; delay: number; scheduledTime: number }> {
-    return Array.from(this.mockTimers.values())
-      .filter(timer => !timer.executed)
-      .map(timer => ({
-        id: timer.id,
-        delay: timer.delay,
-        scheduledTime: timer.scheduledTime
-      }));
+    const timers = (this.engine as any).timerManager.getActiveTimers();
+    return timers.map((timer: any) => ({
+      id: timer.id,
+      delay: timer.duration,
+      scheduledTime: timer.startTime + timer.duration
+    }));
   }
 
   /**
@@ -397,5 +384,98 @@ export class StageFlowTestEngine<TStage extends string, TData = unknown> {
 
   getStageEffect(stage: TStage): string | undefined {
     return this.engine.getStageEffect(stage);
+  }
+
+  setStageData(data: TData): void {
+    return this.engine.setStageData(data);
+  }
+
+  pauseTimers(): void {
+    return this.engine.pauseTimers();
+  }
+
+  resumeTimers(): void {
+    return this.engine.resumeTimers();
+  }
+
+  resetTimers(): void {
+    return this.engine.resetTimers();
+  }
+
+  getTimerRemainingTime(): number {
+    return this.engine.getTimerRemainingTime();
+  }
+
+  areTimersPaused(): boolean {
+    return this.engine.areTimersPaused();
+  }
+
+  /**
+   * Syncs engine timers with mock timers
+   */
+  private _syncEngineTimers(): void {
+    const engineTimers = this.engine.getActiveTimers();
+    
+    if (this.debug) {
+      console.log(`[TestEngine] Syncing engine timers. Found ${engineTimers.length} timers`);
+    }
+    
+    for (const timer of engineTimers) {
+      // Check if timer is already in mock timers
+      if (!this.mockTimers.has(timer.id)) {
+        // Add timer to mock timers
+        const mockTimer: MockTimer = {
+          id: timer.id,
+          callback: async () => {
+            // This callback will be called when timer expires
+            // The actual transition will be handled by the engine
+            // We need to trigger the engine's timer execution
+            await this._executeEngineTimer(timer.id);
+          },
+          delay: timer.duration,
+          scheduledTime: timer.startTime + timer.duration,
+          executed: false
+        };
+        
+        this.mockTimers.set(timer.id, mockTimer);
+        
+        if (this.debug) {
+          console.log(`[TestEngine] Synced engine timer: ${timer.id}`);
+        }
+      }
+    }
+  }
+
+  /**
+   * Executes a specific engine timer
+   */
+  private async _executeEngineTimer(timerId: string): Promise<void> {
+    // Access the engine's timer manager and execute the timer
+    const timerManager = (this.engine as any).timerManager;
+    if (timerManager && timerManager._timers.has(timerId)) {
+      // Get the timer configuration
+      const timerConfig = timerManager._timerConfigs.get(timerId);
+      if (timerConfig) {
+        // Parse timer ID to get target
+        const parts = timerId.split('-');
+        if (parts.length >= 3) {
+          const target = parts[1];
+          
+          // Create a transition object
+          const transition = {
+            target: target as any,
+            after: timerConfig.duration
+          };
+          
+          // Execute the transition by directly calling the engine's goTo method
+          // This simulates the timer-based transition
+          try {
+            await this.engine.goTo(transition.target as any);
+          } catch (error) {
+            console.error(`[TestEngine] Timer execution error:`, error);
+          }
+        }
+      }
+    }
   }
 }

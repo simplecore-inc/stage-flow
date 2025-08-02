@@ -83,7 +83,7 @@ Transitions define how your application moves from one stage to another. They ar
 - **target**: The stage to transition to
 - **event**: The event that triggers the transition
 - **condition**: Optional condition that must be true for the transition
-- **duration**: Optional duration for automatic transition
+- **after**: Optional duration in milliseconds for automatic transition
 - **middleware**: Optional middleware specific to this transition
 
 ## Data

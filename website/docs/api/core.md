@@ -102,7 +102,11 @@ interface StageConfig<TStage extends string, TData = unknown> {
   /** Optional stage-specific data */
   data?: TData;
   
-  // Note: Lifecycle hooks are not currently supported in the core API
+  /** Optional hook called when entering this stage */
+  onEnter?: (context: StageContext<TStage, TData>) => void | Promise<void>;
+  
+  /** Optional hook called when exiting this stage */
+  onExit?: (context: StageContext<TStage, TData>) => void | Promise<void>;
 }
 ```
 
@@ -121,7 +125,7 @@ interface Transition<TStage extends string, TData = unknown> {
   /** Optional condition that must be met for transition */
   condition?: (context: StageContext<TStage, TData>) => boolean | Promise<boolean>;
   
-  /** Optional after in milliseconds for automatic transition */
+  /** Optional duration in milliseconds for automatic transition */
   after?: number;
   
   /** Optional middleware specific to this transition */

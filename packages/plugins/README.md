@@ -196,14 +196,14 @@ class MyCustomPlugin implements Plugin {
   
   hooks = {
     onStageEnter: async (context: StageContext) => {
-      console.log(`Entered stage: ${context.stage}`);
+      console.log(`Entered stage: ${context.current}`);
     },
     
     onStageExit: async (context: StageContext) => {
-      console.log(`Exited stage: ${context.stage}`);
+      console.log(`Exited stage: ${context.current}`);
     },
     
-    onTransition: async (context: TransitionContext) => {
+    beforeTransition: async (context: TransitionContext) => {
       console.log(`Transition: ${context.from} -> ${context.to}`);
     }
   };

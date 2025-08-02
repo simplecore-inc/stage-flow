@@ -335,36 +335,5 @@ describe('Integration Tests', () => {
     });
   });
 
-  describe.skip('Error Recovery Testing', () => {
-    it('should test error recovery scenarios', async () => {
-      const engine = StageFlowTestEngine.create(config);
-      
-      const errorRecoveryPlugin = createMockPlugin({
-        name: 'error-recovery-plugin',
-        hooks: {
-          onStageEnter: vi.fn(async (context) => {
-            if (context.current === 'error') {
-              // Simulate automatic retry after entering error state
-              setTimeout(async () => {
-                await engine.send('retry');
-              }, 100);
-            }
-          })
-        }
-      }) as Plugin<TestStage, TestData>;
 
-      await engine.installPlugin(errorRecoveryPlugin);
-
-      // Trigger error
-      await engine.send('start');
-      await engine.send('fail');
-      expect(engine.getCurrentStage()).toBe('error');
-
-      // Wait for automatic retry
-      await new Promise(resolve => setTimeout(resolve, 150));
-      expect(engine.getCurrentStage()).toBe('init');
-
-      expect(errorRecoveryPlugin.hooks?.onStageEnter).toHaveBeenCalledTimes(3); // processing, error, init
-    });
-  });
 });

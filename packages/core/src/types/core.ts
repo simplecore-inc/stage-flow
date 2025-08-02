@@ -649,4 +649,92 @@ export interface StageFlowEngine<TStage extends string, TData = unknown> {
   resetTimers(): void;
   getTimerRemainingTime(): number;
   areTimersPaused(): boolean;
+  subscribeToTimerEvents(listener: TimerEventListener<TStage, TData>): () => void;
+  getActiveTimers(): TimerState[];
+  getStageTimers(stage: TStage): TimerState[];
+  cancelTimer(timerId: string): boolean;
+  serializeTimerState(): string;
+  restoreTimerState(serializedState: string): boolean;
+}
+
+/**
+ * Timer event types for the timer event system
+ */
+export type TimerEventType = 
+  | 'timer:started'
+  | 'timer:paused'
+  | 'timer:resumed'
+  | 'timer:reset'
+  | 'timer:completed'
+  | 'timer:cancelled';
+
+/**
+ * Timer event data interface
+ */
+export interface TimerEvent<TStage extends string, TData = unknown> {
+  /** Type of timer event */
+  type: TimerEventType;
+  /** Timer identifier */
+  timerId: string;
+  /** Stage the timer belongs to */
+  stage: TStage;
+  /** Target stage for the timer transition */
+  target: TStage;
+  /** Original timer duration in milliseconds */
+  duration: number;
+  /** Remaining time in milliseconds (for pause/resume events) */
+  remainingTime?: number;
+  /** Timestamp when the event occurred */
+  timestamp: number;
+  /** Associated stage data */
+  data?: TData;
+}
+
+/**
+ * Timer event listener callback
+ */
+export type TimerEventListener<TStage extends string, TData = unknown> = (
+  event: TimerEvent<TStage, TData>
+) => void;
+
+/**
+ * Timer configuration for advanced timer management
+ */
+export interface TimerConfig {
+  /** Timer identifier (auto-generated if not provided) */
+  id?: string;
+  /** Timer duration in milliseconds */
+  duration: number;
+  /** Whether the timer should repeat */
+  repeat?: boolean;
+  /** Repeat interval (if different from duration) */
+  repeatInterval?: number;
+  /** Maximum number of repeats (0 = infinite) */
+  maxRepeats?: number;
+  /** Priority for multiple timers (higher = more priority) */
+  priority?: number;
+  /** Custom data associated with the timer */
+  metadata?: Record<string, unknown>;
+}
+
+/**
+ * Timer state information
+ */
+export interface TimerState {
+  /** Timer identifier */
+  id: string;
+  /** Current stage */
+  stage: string;
+  /** Target stage */
+  target: string;
+  /** Original duration */
+  duration: number;
+  /** Remaining time */
+  remainingTime: number;
+  /** Whether timer is paused */
+  isPaused: boolean;
+  /** Start time timestamp */
+  startTime: number;
+  /** Timer configuration */
+  config: TimerConfig;
 }

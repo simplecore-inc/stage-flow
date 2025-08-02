@@ -312,4 +312,4 @@ style={{
 
 - **[Simple Counter](./simple-counter.md)** - Basic increment/decrement functionality
 - **[Todo List](./todo-list.md)** - Add, complete, and delete items with stage components
-- **[Advanced Examples](/docs/examples/advanced/examples-multi-step-form)** - Complex multi-stage examples
+- **[Advanced Examples](/docs/examples/advanced/multi-step-form)** - Complex multi-stage examples
