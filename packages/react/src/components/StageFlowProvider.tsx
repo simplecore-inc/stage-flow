@@ -4,6 +4,7 @@
 
 import { createContext, useContext, ReactNode } from 'react';
 import { StageFlowEngine } from '@stage-flow/core';
+import React from 'react';
 
 /**
  * Context for sharing StageFlowEngine instance
@@ -29,7 +30,7 @@ export interface StageFlowProviderProps<TStage extends string, TData = unknown> 
 export function StageFlowProvider<TStage extends string, TData = unknown>({
   engine,
   children
-}: StageFlowProviderProps<TStage, TData>): JSX.Element {
+}: StageFlowProviderProps<TStage, TData>): React.JSX.Element {
   return (
     <StageFlowContext.Provider value={engine as unknown as StageFlowEngine<string, unknown>}>
       {children}

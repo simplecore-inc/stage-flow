@@ -178,7 +178,7 @@ export function StageAnimation({
   style,
   onAnimationStart,
   onAnimationComplete
-}: StageAnimationProps): JSX.Element {
+}: StageAnimationProps): React.JSX.Element {
   // Always call useEffect to handle callbacks consistently
   React.useEffect(() => {
     if (effect.type === 'none') {

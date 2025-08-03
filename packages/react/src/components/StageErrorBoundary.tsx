@@ -90,7 +90,7 @@ const DefaultErrorFallback: React.ComponentType<StageErrorFallbackProps> = ({
   fallbackStage,
   retryAttempts = 0,
   maxRetries = 3
-}) => (
+}): React.JSX.Element => (
   <div style={{
     padding: '20px',
     border: '1px solid #ff6b6b',
@@ -316,7 +316,7 @@ export class StageErrorBoundary extends Component<
     }
   };
 
-  render(): ReactNode {
+  render(): React.JSX.Element {
     const { hasError, error, errorInfo, retryAttempts, isRetrying, errorBoundaryIntegration } = this.state;
     const { children, fallback: FallbackComponent = DefaultErrorFallback, engine, maxRetries = 3 } = this.props;
 
@@ -350,7 +350,7 @@ export class StageErrorBoundary extends Component<
       );
     }
 
-    return children;
+    return children as React.JSX.Element;
   }
 }
 
@@ -380,7 +380,7 @@ export function withStageErrorBoundary<P extends object>(
   Component: ComponentType<P>,
   options: UseErrorBoundaryOptions = {}
 ): ComponentType<P> {
-  const WrappedComponent = (props: P): JSX.Element => (
+  const WrappedComponent = (props: P): React.JSX.Element => (
     <StageErrorBoundary
       onError={options.onError}
       fallback={options.fallback}

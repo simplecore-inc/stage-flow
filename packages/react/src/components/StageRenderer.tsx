@@ -2,7 +2,7 @@
  * StageRenderer - Component for rendering stages with animation support
  */
 
-import React, { ComponentType, useRef, useEffect } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { StageFlowEngine, EffectConfig, effectRegistry, DEFAULT_EFFECTS } from '@stage-flow/core';
 import { useStageFlow } from '../hooks/useStageFlow';
@@ -27,6 +27,19 @@ export interface StageProps<TStage extends string, TData = unknown> {
 }
 
 /**
+ * Default fallback component for stages without specific components
+ */
+const DefaultStageComponent = <TStage extends string, TData = unknown>({
+  stage,
+  data
+}: StageProps<TStage, TData>): React.JSX.Element => (
+  <div>
+    <h2>Stage: {stage}</h2>
+    {data && <pre>{JSON.stringify(data, null, 2)}</pre>}
+  </div>
+);
+
+/**
  * Props for StageRenderer component
  */
 export interface StageRendererProps<TStage extends string, TData = unknown> {
@@ -34,10 +47,10 @@ export interface StageRendererProps<TStage extends string, TData = unknown> {
   engine?: StageFlowEngine<TStage, TData>;
   /** Optional effect configurations - overrides stage-specific effects */
   effects?: Record<string, EffectConfig>;
-  /** Optional stage component overrides */
-  stageComponents?: Partial<Record<TStage, ComponentType<StageProps<TStage, TData>>>>;
+  /** Optional stage component overrides - compatible with React 18 and 19 */
+  stageComponents?: Partial<Record<TStage, React.ComponentType<StageProps<TStage, TData>>>>;
   /** Optional fallback component for stages without specific components */
-  fallbackComponent?: ComponentType<StageProps<TStage, TData>>;
+  fallbackComponent?: React.ComponentType<StageProps<TStage, TData>>;
   /** Whether to disable animations globally */
   disableAnimations?: boolean;
   /** Default effect to use when no stage-specific effect is defined */
@@ -47,19 +60,6 @@ export interface StageRendererProps<TStage extends string, TData = unknown> {
   /** Custom style for the container */
   style?: React.CSSProperties;
 }
-
-/**
- * Default fallback component for stages without specific components
- */
-const DefaultStageComponent = <TStage extends string, TData = unknown>({
-  stage,
-  data
-}: StageProps<TStage, TData>) => (
-  <div>
-    <h2>Stage: {stage}</h2>
-    {data && <pre>{JSON.stringify(data, null, 2)}</pre>}
-  </div>
-);
 
 /**
  * Component that renders the current stage with animation support
@@ -76,7 +76,7 @@ export function StageRenderer<TStage extends string, TData = unknown>({
   defaultEffect = DEFAULT_EFFECTS.fade,
   className,
   style,
-}: StageRendererProps<TStage, TData>): JSX.Element {
+}: StageRendererProps<TStage, TData>): React.JSX.Element {
   const { currentStage, data, send, goTo, setStageData, isTransitioning, engine: contextEngine } = useStageFlow(engine);
   const animationCleanupRef = useRef<(() => void) | null>(null);
 
@@ -146,7 +146,7 @@ export function StageRenderer<TStage extends string, TData = unknown>({
   };
 
   // Render the stage component
-  const renderStageComponent = (): JSX.Element => {
+  const renderStageComponent = (): React.JSX.Element => {
     const StageComponent = stageComponents[currentStage] || fallbackComponent;
     return React.createElement(StageComponent, stageProps);
   };
