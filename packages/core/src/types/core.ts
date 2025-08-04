@@ -198,15 +198,23 @@ export interface StageConfig<TStage extends string, TData = unknown> {
   /** 
    * Optional effect to apply during transitions to/from this stage
    * 
-   * References an effect name defined in the main configuration's effects object.
+   * Can be either a string referencing an effect name defined in the main 
+   * configuration's effects object, or a direct EffectConfig object.
    * The effect will be applied when transitioning to or from this stage.
    * 
    * @example
    * ```typescript
+   * // String reference to effects object
    * effect: 'slideIn' // References effects.slideIn in main config
+   * 
+   * // Direct effect configuration
+   * effect: { type: 'slide', duration: 400, easing: 'ease-out' }
+   * 
+   * // Built-in effect with custom settings
+   * effect: { type: 'fade', duration: 300, delay: 100 }
    * ```
    */
-  effect?: string;
+  effect?: string | EffectConfig;
   
   /** 
    * Optional stage-specific data
@@ -627,8 +635,8 @@ export interface StageFlowState<TStage extends string, TData = unknown> {
 export interface StageFlowEngine<TStage extends string, TData = unknown> {
   getCurrentStage(): TStage;
   getCurrentData(): TData | undefined;
-  getCurrentStageEffect(): string | undefined;
-  getStageEffect(stage: TStage): string | undefined;
+  getCurrentStageEffect(): string | EffectConfig | undefined;
+  getStageEffect(stage: TStage): string | EffectConfig | undefined;
   send(event: string, data?: TData): Promise<void>;
   goTo(stage: TStage, data?: TData): Promise<void>;
   setStageData(data: TData): void;

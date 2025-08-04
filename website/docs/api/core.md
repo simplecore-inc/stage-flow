@@ -21,8 +21,8 @@ class StageFlowEngine<TStage extends string, TData = unknown> {
   // State Management
   getCurrentStage(): TStage;
   getCurrentData(): TData | undefined;
-  getCurrentStageEffect(): string | undefined;
-  getStageEffect(stage: TStage): string | undefined;
+  getCurrentStageEffect(): string | EffectConfig | undefined;
+  getStageEffect(stage: TStage): string | EffectConfig | undefined;
   
   // Event Handling
   send(event: string, data?: TData): Promise<void>;
@@ -97,7 +97,7 @@ interface StageConfig<TStage extends string, TData = unknown> {
   transitions: Transition<TStage, TData>[];
   
   /** Optional effect to apply during transitions to/from this stage */
-  effect?: string;
+  effect?: string | EffectConfig;
   
   /** Optional stage-specific data */
   data?: TData;

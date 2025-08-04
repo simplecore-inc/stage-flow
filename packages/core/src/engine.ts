@@ -5,7 +5,7 @@
  * state transitions with full TypeScript support, plugin system, and middleware pipeline.
  */
 
-import { StageFlowConfig, StageConfig, StageFlowState, Transition, TransitionContext, Plugin, Middleware, StageFlowEngine as IStageFlowEngine } from "./types/core";
+import { StageFlowConfig, StageConfig, StageFlowState, Transition, TransitionContext, Plugin, Middleware, StageFlowEngine as IStageFlowEngine, EffectConfig } from "./types/core";
 import { TransitionError, ConfigurationError, PluginError } from "./types/errors";
 import { validateStageFlowConfigStrict, RuntimeTypeChecker, ValidationOptions } from "./validation";
 import { TimerManager } from "./timer-manager";
@@ -205,14 +205,14 @@ export class StageFlowEngine<TStage extends string, TData = unknown> implements 
   /**
    * Gets the effect configuration for the current stage
    */
-  getCurrentStageEffect(): string | undefined {
+  getCurrentStageEffect(): string | EffectConfig | undefined {
     return this.stateManager.getCurrentStageEffect();
   }
 
   /**
    * Gets the effect configuration for a specific stage
    */
-  getStageEffect(stage: TStage): string | undefined {
+  getStageEffect(stage: TStage): string | EffectConfig | undefined {
     return this.stateManager.getStageEffect(stage);
   }
 

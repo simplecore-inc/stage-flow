@@ -285,8 +285,31 @@ export class StageFlowValidator<TStage extends string, TData = unknown> {
 
     // Validate effect reference
     if (stage.effect !== undefined) {
-      if (typeof stage.effect !== 'string' || stage.effect.trim() === '') {
-        result.errors.push(`${stagePrefix}: Effect must be a non-empty string`);
+      if (typeof stage.effect === 'string') {
+        // Validate string effect reference
+        if (stage.effect.trim() === '') {
+          result.errors.push(`${stagePrefix}: Effect must be a non-empty string`);
+        }
+      } else if (typeof stage.effect === 'object' && stage.effect !== null) {
+        // Validate EffectConfig object
+        if (!stage.effect.type || typeof stage.effect.type !== 'string') {
+          result.errors.push(`${stagePrefix}: Effect object must have a valid 'type' property`);
+        }
+        
+        // Validate optional properties
+        if (stage.effect.duration !== undefined && (typeof stage.effect.duration !== 'number' || stage.effect.duration < 0)) {
+          result.errors.push(`${stagePrefix}: Effect duration must be a non-negative number`);
+        }
+        
+        if (stage.effect.delay !== undefined && (typeof stage.effect.delay !== 'number' || stage.effect.delay < 0)) {
+          result.errors.push(`${stagePrefix}: Effect delay must be a non-negative number`);
+        }
+        
+        if (stage.effect.easing !== undefined && typeof stage.effect.easing !== 'string') {
+          result.errors.push(`${stagePrefix}: Effect easing must be a string`);
+        }
+      } else {
+        result.errors.push(`${stagePrefix}: Effect must be either a string or an EffectConfig object`);
       }
     }
 
@@ -637,7 +660,12 @@ export class StageFlowValidator<TStage extends string, TData = unknown> {
       const usedEffects = new Set<string>();
       for (const stage of config.stages) {
         if (stage.effect) {
-          usedEffects.add(stage.effect);
+          // Handle both string and EffectConfig types
+          if (typeof stage.effect === 'string') {
+            usedEffects.add(stage.effect);
+          }
+          // If it's an EffectConfig object, we don't need to track it in usedEffects
+          // since it's not referencing a named effect from the effects object
         }
       }
 
@@ -652,7 +680,7 @@ export class StageFlowValidator<TStage extends string, TData = unknown> {
     if (config.effects) {
       const definedEffects = new Set(Object.keys(config.effects));
       for (const stage of config.stages) {
-        if (stage.effect && !definedEffects.has(stage.effect)) {
+        if (stage.effect && typeof stage.effect === 'string' && !definedEffects.has(stage.effect)) {
           result.warnings.push(`Stage "${stage.name}" references undefined effect "${stage.effect}"`);
         }
       }

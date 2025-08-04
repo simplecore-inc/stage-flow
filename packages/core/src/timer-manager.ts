@@ -50,6 +50,9 @@ export class TimerManager<TStage extends string, TData = unknown> {
     isTransitioning: () => boolean,
     getCurrentData: () => TData | undefined
   ): void {
+    // Clear existing timers for this stage first
+    this.clearStageTimers(stage);
+    
     // Sort transitions by priority (shorter duration = higher priority by default)
     const timerTransitions = stageConfig.transitions
       .filter(t => t.after && t.after > 0)
@@ -63,22 +66,8 @@ export class TimerManager<TStage extends string, TData = unknown> {
       });
 
     for (const transition of timerTransitions) {
-      console.debug('[TimerManager] timerTransitions:', timerTransitions);
       if (transition.after && transition.after > 0) {
         const timerId = `${stage}-${transition.target}-${transition.after}`;
-        
-        // Check if timer already exists to avoid duplicates
-        if (this._timers.has(timerId)) {
-          console.debug('[TimerManager] Timer already exists, skipping:', timerId);
-          continue;
-        }
-        
-        // Clear any existing timer with the same ID (defensive programming)
-        const existingTimer = this._timers.get(timerId);
-        if (existingTimer) {
-          clearTimeout(existingTimer);
-          console.debug('[TimerManager] Cleared existing timer before creating new one:', timerId);
-        }
         
         // Store timer start time and configuration
         const startTime = Date.now();
@@ -90,23 +79,15 @@ export class TimerManager<TStage extends string, TData = unknown> {
         
         // Store the timer reference
         this._timers.set(timerId, setTimeout(async () => {
-          console.debug('[TimerManager] setTimeout called for', timerId, 'delay:', transition.after);
           try {
             // Check if timer is still valid (not cleared) and conditions are met
             const currentStage = getCurrentStage();
-            const shouldTransition = this._timers.has(timerId) && isStarted() && currentStage === stage && !isTransitioning();
-            console.debug('[TimerManager] Timer conditions check for', timerId, ':', {
-              hasTimer: this._timers.has(timerId),
-              isStarted: isStarted(),
-              currentStage,
-              expectedStage: stage,
-              isTransitioning: isTransitioning(),
-              shouldTransition,
-              stageMatch: currentStage === stage
-            });
+            const isEngineStarted = isStarted();
+            const isCurrentlyTransitioning = isTransitioning();
+            const stageMatches = currentStage === stage;
+            const shouldTransition = this._timers.has(timerId) && isEngineStarted && stageMatches && !isCurrentlyTransitioning;
+            
             if (!shouldTransition) {
-              // If conditions are not met, do nothing and return
-              console.debug('[TimerManager] Timer conditions not met for', timerId, ', skipping transition and returning');
               // Clean up timer references even when conditions are not met
               this._timers.delete(timerId);
               this._timerPaused.delete(timerId);
@@ -115,8 +96,25 @@ export class TimerManager<TStage extends string, TData = unknown> {
               this._timerConfigs.delete(timerId);
               return;
             }
-            console.debug('[TimerManager] Executing transition:', transition);
-            await executeTransition(transition);
+            
+            // Additional safety check: ensure we're still in the expected stage
+            if (getCurrentStage() !== stage) {
+              this._timers.delete(timerId);
+              this._timerPaused.delete(timerId);
+              this._timerStartTimes.delete(timerId);
+              this._timerRemainingTimes.delete(timerId);
+              this._timerConfigs.delete(timerId);
+              return;
+            }
+            
+            try {
+              console.debug('[TimerManager] Executing transition:', timerId, 'from', stage, 'to', transition.target);
+              await executeTransition(transition);
+              console.debug('[TimerManager] Transition completed:', timerId, 'from', stage, 'to', transition.target);
+            } catch (transitionError) {
+              console.error('[TimerManager] Transition execution failed for', timerId, ':', transitionError);
+              throw transitionError;
+            }
           } catch (error) {
             // Handle timer-based transition errors with retry logic
             await this._handleTimerError(timerId, transition, error, executeTransition, getCurrentStage, isStarted, isTransitioning, getCurrentData);
@@ -153,7 +151,6 @@ export class TimerManager<TStage extends string, TData = unknown> {
       if (timerId.startsWith(`${stage}-`)) {
         clearTimeout(timer);
         timersToDelete.push(timerId);
-        console.debug('[TimerManager] Cleared timer:', timerId, 'for stage:', stage);
       }
     }
 
@@ -371,9 +368,6 @@ export class TimerManager<TStage extends string, TData = unknown> {
    * Gets all active timer states
    */
   getActiveTimers(): TimerState[] {
-    console.debug('[TimerManager] _timers:', Array.from(this._timers.entries()));
-    console.debug('[TimerManager] _timerStartTimes:', Array.from(this._timerStartTimes.entries()));
-    console.debug('[TimerManager] _timerConfigs:', Array.from(this._timerConfigs.entries()));
     const timerStates: TimerState[] = [];
     
     for (const [timerId, _timer] of this._timers.entries()) {

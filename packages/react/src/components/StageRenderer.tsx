@@ -48,9 +48,9 @@ export interface StageRendererProps<TStage extends string, TData = unknown> {
   /** Optional effect configurations - overrides stage-specific effects */
   effects?: Record<string, EffectConfig>;
   /** Optional stage component overrides - compatible with React 18 and 19 */
-  stageComponents?: Partial<Record<TStage, React.ComponentType<StageProps<TStage, TData>>>>;
+  stageComponents?: Partial<Record<TStage, any>>;
   /** Optional fallback component for stages without specific components */
-  fallbackComponent?: React.ComponentType<StageProps<TStage, TData>>;
+  fallbackComponent?: any;
   /** Whether to disable animations globally */
   disableAnimations?: boolean;
   /** Default effect to use when no stage-specific effect is defined */
@@ -112,21 +112,29 @@ export function StageRenderer<TStage extends string, TData = unknown>({
     // Use provided engine or get from context
     const actualEngine = engine || contextEngine;
     if (actualEngine) {
-      const stageEffectName = actualEngine.getCurrentStageEffect();
-      if (stageEffectName) {
-        // Try to resolve the effect from the registry
-        const resolvedEffect = effectRegistry.create(stageEffectName);
-        if (resolvedEffect) {
-          return resolvedEffect;
+      const stageEffect = actualEngine.getCurrentStageEffect();
+      if (stageEffect) {
+        // If it's already an EffectConfig object, return it directly
+        if (typeof stageEffect === 'object' && 'type' in stageEffect) {
+          return stageEffect as EffectConfig;
         }
 
-        // If not found in registry, check if it's a built-in effect
-        if (stageEffectName in DEFAULT_EFFECTS) {
-          return DEFAULT_EFFECTS[stageEffectName as keyof typeof DEFAULT_EFFECTS];
-        }
+        // If it's a string, try to resolve it
+        if (typeof stageEffect === 'string') {
+          // Try to resolve the effect from the registry
+          const resolvedEffect = effectRegistry.create(stageEffect);
+          if (resolvedEffect) {
+            return resolvedEffect;
+          }
 
-        // If effect name is not recognized, log warning and fall back
-        console.warn(`Effect "${stageEffectName}" not found in registry or built-in effects. Using default effect.`);
+          // If not found in registry, check if it's a built-in effect
+          if (stageEffect in DEFAULT_EFFECTS) {
+            return DEFAULT_EFFECTS[stageEffect as keyof typeof DEFAULT_EFFECTS];
+          }
+
+          // If effect name is not recognized, log warning and fall back
+          console.warn(`Effect "${stageEffect}" not found in registry or built-in effects. Using default effect.`);
+        }
       }
     }
 

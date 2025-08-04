@@ -11,7 +11,8 @@
 import {
   StageFlowState,
   StageContext,
-  StageConfig
+  StageConfig,
+  EffectConfig
 } from './types/core';
 import { StageFlowError } from './types/errors';
 
@@ -69,7 +70,7 @@ export class StateManager<TStage extends string, TData = unknown> {
   /**
    * Gets the effect configuration for the current stage
    */
-  getCurrentStageEffect(): string | undefined {
+  getCurrentStageEffect(): string | EffectConfig | undefined {
     const stageConfig = this.getCurrentStageConfig();
     return stageConfig.effect;
   }
@@ -77,7 +78,7 @@ export class StateManager<TStage extends string, TData = unknown> {
   /**
    * Gets the effect configuration for a specific stage
    */
-  getStageEffect(stage: TStage): string | undefined {
+  getStageEffect(stage: TStage): string | EffectConfig | undefined {
     const stageConfig = this.stageMap.get(stage);
     return stageConfig?.effect;
   }

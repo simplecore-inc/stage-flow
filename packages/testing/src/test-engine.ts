@@ -7,7 +7,8 @@ import {
   StageFlowEngine,
   StageFlowState,
   Plugin,
-  Middleware
+  Middleware,
+  EffectConfig
 } from '@stage-flow/core';
 
 /**
@@ -378,11 +379,11 @@ export class StageFlowTestEngine<TStage extends string, TData = unknown> {
     return this.engine.removeMiddleware(name);
   }
 
-  getCurrentStageEffect(): string | undefined {
+  getCurrentStageEffect(): string | EffectConfig | undefined {
     return this.engine.getCurrentStageEffect();
   }
 
-  getStageEffect(stage: TStage): string | undefined {
+  getStageEffect(stage: TStage): string | EffectConfig | undefined {
     return this.engine.getStageEffect(stage);
   }
 

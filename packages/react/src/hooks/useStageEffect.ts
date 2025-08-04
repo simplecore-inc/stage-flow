@@ -35,26 +35,36 @@ export function useStageEffect<TStage extends string, TData = unknown>(
       
       try {
         // Get stage-specific effect from engine
-        const stageEffectName = engine.getCurrentStageEffect();
+        const stageEffect = engine.getCurrentStageEffect();
         
-        if (stageEffectName) {
-          // Try to resolve the effect from the registry
-          const resolvedEffect = effectRegistry.create(stageEffectName);
-          if (resolvedEffect) {
-            setEffect(resolvedEffect);
+        if (stageEffect) {
+          // If it's already an EffectConfig object, use it directly
+          if (typeof stageEffect === 'object' && 'type' in stageEffect) {
+            setEffect(stageEffect as EffectConfig);
             setIsLoading(false);
             return;
           }
 
-          // If not found in registry, check if it's a built-in effect
-          if (stageEffectName in DEFAULT_EFFECTS) {
-            setEffect(DEFAULT_EFFECTS[stageEffectName as keyof typeof DEFAULT_EFFECTS]);
-            setIsLoading(false);
-            return;
-          }
+          // If it's a string, try to resolve it
+          if (typeof stageEffect === 'string') {
+            // Try to resolve the effect from the registry
+            const resolvedEffect = effectRegistry.create(stageEffect);
+            if (resolvedEffect) {
+              setEffect(resolvedEffect);
+              setIsLoading(false);
+              return;
+            }
 
-          // If effect name is not recognized, log warning and use default
-          console.warn(`Effect "${stageEffectName}" not found in registry or built-in effects. Using default effect.`);
+            // If not found in registry, check if it's a built-in effect
+            if (stageEffect in DEFAULT_EFFECTS) {
+              setEffect(DEFAULT_EFFECTS[stageEffect as keyof typeof DEFAULT_EFFECTS]);
+              setIsLoading(false);
+              return;
+            }
+
+            // If effect name is not recognized, log warning and use default
+            console.warn(`Effect "${stageEffect}" not found in registry or built-in effects. Using default effect.`);
+          }
         }
 
         // Use default effect
