@@ -1,6 +1,6 @@
 {
   "name": "@stage-flow/plugins",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "type": "module",
   "description": "Built-in plugins for stage flow library",
   "main": "dist/index.js",
@@ -31,7 +31,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@stage-flow/core": "^0.0.4"
+    "@stage-flow/core": "^0.0.5"
   },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "^15.2.1",
